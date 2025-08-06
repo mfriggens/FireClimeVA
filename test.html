@@ -963,3 +963,375 @@
                             <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Report</button>
                         </div>
                     </div>
+                    <div style="font-size: 2rem; color: #d69e2e; font-weight: bold;">-</div>
+                                <div style="color: #4a5568;">Complete baseline assessment</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <h4>Assessment Summary</h4>
+                            <div id="assessment-notes" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                <p><strong>Key Findings:</strong></p>
+                                <ul id="findings-list">
+                                    <li>Complete baseline assessment to generate findings</li>
+                                </ul>
+                            </div>
+                            
+                            <h4>Management Recommendations</h4>
+                            <div id="recommendations" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                                <p id="recommendation-text">Complete vulnerability assessment to receive specific management recommendations based on your ecosystem's risk profile.</p>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 2rem;">
+                                <button class="btn btn-primary" onclick="exportResults()" style="margin-right: 1rem;">📊 Export Results</button>
+                                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for data storage
+        let assessmentData = {
+            prework: {},
+            baseline: {},
+            treatments: [],
+            weighting: {
+                ecosystem: { vegetation: 25, species: 25, function: 25, disturbance: 25 },
+                fire: { frequency: 25, intensity: 25, timing: 25, behavior: 25 }
+            }
+        };
+
+        // Tab management
+        function showTab(tabName) {
+            // Hide all panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected panel and activate tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Find and activate the clicked tab
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach((tab, index) => {
+                if ((index === 0 && tabName === 'overview') ||
+                    (index === 1 && tabName === 'prework') ||
+                    (index === 2 && tabName === 'baseline') ||
+                    (index === 3 && tabName === 'treatments') ||
+                    (index === 4 && tabName === 'weighting') ||
+                    (index === 5 && tabName === 'results')) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update progress when switching tabs
+            updateProgress();
+        }
+
+        // Progress tracking
+        function updateProgress() {
+            const preworkInputs = document.querySelectorAll('#prework .form-input');
+            const baselineInputs = document.querySelectorAll('#baseline .form-input');
+            
+            let preworkFilled = 0;
+            preworkInputs.forEach(input => {
+                if (input.value && input.value !== '') preworkFilled++;
+            });
+            
+            let baselineFilled = 0;
+            baselineInputs.forEach(input => {
+                if (input.value && input.value !== '') baselineFilled++;
+            });
+            
+            const preworkProgress = preworkInputs.length > 0 ? Math.round((preworkFilled / preworkInputs.length) * 100) : 0;
+            const baselineProgress = baselineInputs.length > 0 ? Math.round((baselineFilled / baselineInputs.length) * 100) : 0;
+            
+            if (document.getElementById('prework-progress')) {
+                document.getElementById('prework-progress').textContent = preworkProgress + '%';
+            }
+            if (document.getElementById('prework-bar')) {
+                document.getElementById('prework-bar').style.width = preworkProgress + '%';
+            }
+            
+            if (document.getElementById('baseline-progress')) {
+                document.getElementById('baseline-progress').textContent = baselineProgress + '%';
+            }
+            if (document.getElementById('baseline-bar')) {
+                document.getElementById('baseline-bar').style.width = baselineProgress + '%';
+            }
+        }
+
+        // Risk calculation function
+        function calculateRisk() {
+            const baselineSelects = document.querySelectorAll('#baseline select');
+            let ecosystemValues = [];
+            let fireValues = [];
+            
+            baselineSelects.forEach((select, index) => {
+                if (select.value) {
+                    if (index < 4) {
+                        ecosystemValues.push(parseInt(select.value));
+                    } else {
+                        fireValues.push(parseInt(select.value));
+                    }
+                }
+            });
+            
+            if (ecosystemValues.length > 0 && fireValues.length > 0) {
+                const ecosystemRisk = ecosystemValues.reduce((a, b) => a + b, 0) / ecosystemValues.length;
+                const fireRisk = fireValues.reduce((a, b) => a + b, 0) / fireValues.length;
+                const overallRisk = (ecosystemRisk + fireRisk) / 2;
+                
+                // Update results
+                document.getElementById('overall-risk-score').textContent = overallRisk.toFixed(1);
+                
+                let riskLevel = 'Low Risk';
+                let riskColor = '#48bb78';
+                if (overallRisk >= 4) {
+                    riskLevel = 'Very High Risk';
+                    riskColor = '#e53e3e';
+                } else if (overallRisk >= 3.5) {
+                    riskLevel = 'High Risk';
+                    riskColor = '#e53e3e';
+                } else if (overallRisk >= 2.5) {
+                    riskLevel = 'Moderate Risk';
+                    riskColor = '#d69e2e';
+                } else if (overallRisk >= 1.5) {
+                    riskLevel = 'Low-Moderate Risk';
+                    riskColor = '#38a169';
+                }
+                
+                document.getElementById('risk-level-text').textContent = riskLevel;
+                document.querySelector('.results-summary').style.background = 
+                    `linear-gradient(135deg, ${riskColor} 0%, ${riskColor}dd 100%)`;
+                
+                // Update component scores
+                updateComponentBreakdown(ecosystemRisk, fireRisk, overallRisk);
+                updateRecommendations(overallRisk, ecosystemRisk, fireRisk);
+            }
+        }
+
+        // Update component breakdown
+        function updateComponentBreakdown(ecosystemRisk, fireRisk, overallRisk) {
+            const resultsGrid = document.getElementById('results-grid');
+            if (resultsGrid) {
+                resultsGrid.innerHTML = `
+                    <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h4>Ecosystem Risk</h4>
+                        <div style="font-size: 2rem; color: #667eea; font-weight: bold;">${ecosystemRisk.toFixed(1)}</div>
+                        <div style="color: #4a5568;">${getRiskLevel(ecosystemRisk)}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h4>Fire Risk</h4>
+                        <div style="font-size: 2rem; color: #e53e3e; font-weight: bold;">${fireRisk.toFixed(1)}</div>
+                        <div style="color: #4a5568;">${getRiskLevel(fireRisk)}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h4>Overall Vulnerability</h4>
+                        <div style="font-size: 2rem; color: #d69e2e; font-weight: bold;">${overallRisk.toFixed(1)}</div>
+                        <div style="color: #4a5568;">${getRiskLevel(overallRisk)}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Get risk level text
+        function getRiskLevel(value) {
+            if (value >= 4) return 'Very High';
+            if (value >= 3.5) return 'High';
+            if (value >= 2.5) return 'Moderate';
+            if (value >= 1.5) return 'Low-Moderate';
+            return 'Low';
+        }
+
+        // Update recommendations based on risk scores
+        function updateRecommendations(overallRisk, ecosystemRisk, fireRisk) {
+            let recommendations = '';
+            let findings = [];
+
+            if (overallRisk >= 4) {
+                recommendations = 'Immediate action recommended. Consider intensive management interventions to reduce vulnerability.';
+                findings.push('Very high vulnerability to fire-climate interactions');
+                findings.push('Multiple ecosystem components show high stress indicators');
+            } else if (overallRisk >= 3.5) {
+                recommendations = 'High priority for management attention. Implement targeted treatments to address key vulnerabilities.';
+                findings.push('High vulnerability requires proactive management');
+                findings.push('Focus on most vulnerable ecosystem components');
+            } else if (overallRisk >= 2.5) {
+                recommendations = 'Monitor closely and consider preventive management actions. Good candidate for adaptive management.';
+                findings.push('Moderate vulnerability with mixed resilience indicators');
+                findings.push('Opportunity for preventive management strategies');
+            } else {
+                recommendations = 'Low vulnerability indicates good resilience. Continue monitoring and maintain current management practices.';
+                findings.push('Good resilience to fire-climate interactions');
+                findings.push('Current conditions appear stable');
+            }
+
+            document.getElementById('recommendation-text').textContent = recommendations;
+            
+            const findingsList = document.getElementById('findings-list');
+            findingsList.innerHTML = '';
+            findings.forEach(finding => {
+                const li = document.createElement('li');
+                li.textContent = finding;
+                findingsList.appendChild(li);
+            });
+        }
+
+        // Weight management
+        function updateWeight(component, value) {
+            document.getElementById(`${component}-weight`).textContent = value;
+            
+            // Calculate totals
+            const ecoComponents = ['veg', 'species', 'soil', 'hydro'];
+            const fireComponents = ['freq', 'intensity', 'seasonal', 'fuel'];
+            
+            let totalEco = 0;
+            let totalFire = 0;
+            
+            ecoComponents.forEach(c => {
+                const element = document.getElementById(`${c}-weight`);
+                if (element) {
+                    totalEco += parseInt(element.textContent);
+                }
+            });
+            
+            fireComponents.forEach(c => {
+                const element = document.getElementById(`${c}-weight`);
+                if (element) {
+                    totalFire += parseInt(element.textContent);
+                }
+            });
+            
+            if (document.getElementById('total-eco-weight')) {
+                document.getElementById('total-eco-weight').textContent = totalEco;
+            }
+            if (document.getElementById('total-fire-weight')) {
+                document.getElementById('total-fire-weight').textContent = totalFire;
+            }
+        }
+
+        // Reset weights to default
+        function resetWeights() {
+            const components = ['veg', 'species', 'soil', 'hydro', 'freq', 'intensity', 'seasonal', 'fuel'];
+            components.forEach(comp => {
+                const slider = document.querySelector(`input[onchange*="${comp}"]`);
+                if (slider) {
+                    slider.value = 25;
+                    updateWeight(comp, 25);
+                }
+            });
+        }
+
+        // Add treatment scenario
+        let treatmentCount = 1;
+        function addTreatmentScenario() {
+            if (treatmentCount >= 3) {
+                alert('Maximum of 3 treatment scenarios allowed');
+                return;
+            }
+            
+            treatmentCount++;
+            const container = document.getElementById('treatment-scenarios');
+            const newScenario = document.createElement('div');
+            newScenario.className = 'treatment-scenario';
+            newScenario.innerHTML = `
+                <h4>Treatment Scenario ${treatmentCount}</h4>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Treatment Type</label>
+                        <select class="form-input">
+                            <option>Select treatment</option>
+                            <option>Prescribed Burning</option>
+                            <option>Mechanical Thinning</option>
+                            <option>Fuel Reduction</option>
+                            <option>Species Management</option>
+                            <option>No Action</option>
+                            <option>Combined Approach</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Treatment Intensity</label>
+                        <select class="form-input">
+                            <option>Select intensity</option>
+                            <option value="1">Light (1)</option>
+                            <option value="2">Moderate (2)</option>
+                            <option value="3">Heavy (3)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Expected Effectiveness</label>
+                        <select class="form-input">
+                            <option>Select effectiveness</option>
+                            <option value="1">Low (1)</option>
+                            <option value="2">Moderate (2)</option>
+                            <option value="3">High (3)</option>
+                            <option value="4">Very High (4)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Implementation Cost</label>
+                        <select class="form-input">
+                            <option>Select cost level</option>
+                            <option value="1">Low (1)</option>
+                            <option value="2">Moderate (2)</option>
+                            <option value="3">High (3)</option>
+                            <option value="4">Very High (4)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Treatment Description</label>
+                    <textarea class="form-input" rows="2" placeholder="Describe the treatment approach and expected outcomes"></textarea>
+                </div>
+            `;
+            container.appendChild(newScenario);
+        }
+
+        // Export results
+        function exportResults() {
+            const data = {
+                assessmentData,
+                timestamp: new Date().toISOString(),
+                riskScore: document.getElementById('overall-risk-score').textContent,
+                riskLevel: document.getElementById('risk-level-text').textContent
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fireclime-va-results.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up event listeners for all form inputs
+            document.querySelectorAll('.form-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    updateProgress();
+                    calculateRisk();
+                });
+            });
+            
+            // Set today's date for assessment date
+            const dateInput = document.querySelector('input[type="date"]');
+            if (dateInput) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+        });
+    </script>
+</body>
+</html>
+
