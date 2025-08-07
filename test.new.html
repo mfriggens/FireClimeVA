@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FireCLIME VA - Ecosystem Risk Assessment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+```
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .header {
+        text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .header h1 {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header .subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    .main-content {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .nav-tabs {
+        display: flex;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .nav-tab {
+        flex: 1;
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+    }
+
+    .nav-tab:hover {
+        background: #e9ecef;
+    }
+
+    .nav-tab.active {
+        background: white;
+        border-bottom-color: #667eea;
+        color: #667eea;
+        font-weight: 600;
+    }
+
+    .tab-content {
+        padding: 2rem;
+        min-height: 600px;
+    }
+
+    .tab-panel {
+        display: none;
+    }
+
+    .tab-panel.active {
+        display: block;
+    }
+
+    .hero-section {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+
+    .hero-section h2 {
+        color: #2d3748;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .hero-section p {
+        font-size: 1.1rem;
+        color: #4a5568;
+        max-width: 800px;
+        margin: 0 auto 2rem;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+
+    .feature-card {
+        background: #f7fafc;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .btn-secondary {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+
+    .btn-secondary:hover {
+        background: #cbd5e0;
+    }
+
+    .module-section {
+        margin-bottom: 2rem;
+    }
+
+    .module-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+    }
+
+    .module-content {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0 0 8px 8px;
+        border: 1px solid #dee2e6;
+        border-top: none;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .progress-bar {
+        background: #e2e8f0;
+        border-radius: 10px;
+        height: 8px;
+        margin: 1rem 0;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    .results-summary {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .risk-score {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .risk-level {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    .optional-badge {
+        background: #fbbf24;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .nav-tabs {
+            flex-direction: column;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+        }
+        
+        .hero-section h2 {
+            font-size: 2rem;
+        }
+        
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 FireCLIME VA</h1>
+            <div class="subtitle">Southwest FireCLIME Vulnerability Assessment Tool v3.1</div>
+        </div>
+
+```
+    <div class="main-content">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">Overview</button>
+            <button class="nav-tab" onclick="showTab('prework')">Pre-work</button>
+            <button class="nav-tab" onclick="showTab('exposure')">Exposure</button>
+            <button class="nav-tab" onclick="showTab('sensitivity')">Intrinsic Sensitivity</button>
+            <button class="nav-tab" onclick="showTab('baseline')">Component Response</button>
+            <button class="nav-tab" onclick="showTab('treatments')">Treatments <span class="optional-badge">Optional</span></button>
+            <button class="nav-tab" onclick="showTab('results')">Results</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-panel active">
+            <div class="hero-section">
+                <h2>FireCLIME Vulnerability Assessment</h2>
+                <p>The Southwest FireCLIME Vulnerability Assessment (FireCLIME VA) allows users to compare management strategies under various climate scenarios and gauge the potential effectiveness of those strategies for reducing undesirable impacts of climate on wildfire regimes and resulting impacts of wildfire on natural ecosystems.</p>
+                
+                <p style="font-weight: 600; color: #667eea;">This tool is quick, flexible, and amendable to a range of data inputs including literature review, expert knowledge, and monitoring activities. Use it iteratively to explore various fire-climate-management scenarios for your ecosystems of interest.</p>
+                
+                <button class="btn btn-primary" onclick="showTab('prework')">Start Assessment</button>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌡️</div>
+                    <h3>Climate Scenarios</h3>
+                    <p>Assess vulnerability under different climate change scenarios and projections</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔥</div>
+                    <h3>Fire-Climate Interactions</h3>
+                    <p>Evaluate complex interactions between changing fire regimes and climate conditions</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌲</div>
+                    <h3>Ecosystem Vulnerability</h3>
+                    <p>Quantify ecosystem components' vulnerability to fire-climate stressors</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚖️</div>
+                    <h3>Management Comparison</h3>
+                    <p>Compare effectiveness of different management strategies and treatments</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pre-work Tab -->
+        <div id="prework" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Pre-work Module</h3>
+                    <div>Progress: <span id="prework-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="prework-bar"></div>
+                </div>
+                <div class="module-content">
+                    <h4>I. Site Information</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Site Name</label>
+                            <input type="text" class="form-input" placeholder="Enter site name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Assessor Name</label>
+                            <input type="text" class="form-input" placeholder="Your name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Assessment Date</label>
+                            <input type="date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ecosystem Type</label>
+                            <select class="form-input">
+                                <option>Select ecosystem type</option>
+                                <option>Forest</option>
+                                <option>Grassland</option>
+                                <option>Shrubland</option>
+                                <option>Wetland</option>
+                                <option>Mixed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Site Description & Desired Future Conditions (DFC)</label>
+                        <textarea class="form-input" rows="3" placeholder="Describe the site location, desired future conditions, and assessment objectives"></textarea>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">II. Climate Scenario Variables</h4>
+                    <p style="margin-bottom: 1rem; color: #4a5568;">Indicate expected changes for each climate variable under your chosen climate scenario:</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Growing Season Length</label>
+                            <select class="form-input">
+                                <option>Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mean Peak ERC (Energy Release Component)</label>
+                            <select class="form-input">
+                                <option>Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Summer Temperature/RH/VPD</label>
+                            <select class="form-input">
+                                <option>Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Drought Frequency/Duration</label>
+                            <select class="form-input">
+                                <option>Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Snowpack/Snow Water Equivalent</label>
+                            <select class="form-input">
+                                <option>Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Precipitation Patterns</label>
+                            <select class="form-input">
+                                <option>Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">III. Current Fire Regime Departure</h4>
+                    <p style="margin-bottom: 1rem; color: #4a5568;">Are these fire regime components currently departed from your desired conditions?</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">High Severity Patch Size</label>
+                            <select class="form-input" id="departure-size">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fire Frequency</label>
+                            <select class="form-input" id="departure-frequency">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Soil Burn Severity</label>
+                            <select class="form-input" id="departure-severity">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Annual Area Burned</label>
+                            <select class="form-input" id="departure-area">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="showTab('exposure')">Continue to Exposure Assessment</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exposure Tab -->
+        <div id="exposure" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Fire Regime Exposure Assessment</h3>
+                    <div>Progress: <span id="exposure-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="exposure-bar"></div>
+                </div>
+                <div class="module-content">
+                    <p style="margin-bottom: 2rem; color: #4a5568;">
+                        <strong>Step 1:</strong> How will climate change affect each fire regime component?<br>
+                        <strong>Step 2:</strong> What does that change mean relative to your desired future conditions?
+                    </p>
+
+                    <h4>Fire Regime Component Changes</h4>
+                    <div class="exposure-grid">
+                        <div class="exposure-component">
+                            <h5>High Severity Patch Size</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on fire size</label>
+                                    <select class="form-input exposure-change" data-component="size">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" data-component="size">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="exposure-component">
+                            <h5>Fire Frequency</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on frequency</label>
+                                    <select class="form-input exposure-change" data-component="frequency">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" data-component="frequency">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="exposure-component">
+                            <h5>Soil Burn Severity</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on severity</label>
+                                    <select class="form-input exposure-change" data-component="severity">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" data-component="severity">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="exposure-component">
+                            <h5>Annual Area Burned</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on area burned</label>
+                                    <select class="form-input exposure-change" data-component="area">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" data-component="area">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; background: #e8f5e8; padding: 1rem; border-radius: 8px;">
+                        <h4>Exposure Scoring:</h4>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li><strong>Score = 1:</strong> Fire regime change results in further departure from DFC</li>
+                            <li><strong>Score = 0:</strong> No change OR change brings system closer to DFC</li>
+                            <li><strong>Score = -1:</strong> No fire regime change but conditions move toward DFC</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="showTab('prework')">← Previous</button>
+                        <button class="btn btn-primary" onclick="showTab('sensitivity')" style="margin-left: 1rem;">Continue to Sensitivity</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="baseline" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Baseline Ecosystem & Fire Response Assessment</h3>
+                    <div>Progress: <span id="baseline-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="baseline-bar"></div>
+                </div>
+                <div class="module-content">
+                    <h4>Ecosystem Response Components</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Vegetation Type/Structure Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select response level</option>
+                                <option value="1">Highly Resilient (1)</option>
+                                <option value="2">Moderately Resilient (2)</option>
+                                <option value="3">Neutral/Variable (3)</option>
+                                <option value="4">Moderately Vulnerable (4)</option>
+                                <option value="5">Highly Vulnerable (5)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Species Composition Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select response level</option>
+                                <option value="1">Highly Resilient (1)</option>
+                                <option value="2">Moderately Resilient (2)</option>
+                                <option value="3">Neutral/Variable (3)</option>
+                                <option value="4">Moderately Vulnerable (4)</option>
+                                <option value="5">Highly Vulnerable (5)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ecosystem Function Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select response level</option>
+                                <option value="1">Highly Resilient (1)</option>
+                                <option value="2">Moderately Resilient (2)</option>
+                                <option value="3">Neutral/Variable (3)</option>
+                                <option value="4">Moderately Vulnerable (4)</option>
+                                <option value="5">Highly Vulnerable (5)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Disturbance Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select response level</option>
+                                <option value="1">Highly Resilient (1)</option>
+                                <option value="2">Moderately Resilient (2)</option>
+                                <option value="3">Neutral/Variable (3)</option>
+                                <option value="4">Moderately Vulnerable (4)</option>
+                                <option value="5">Highly Vulnerable (5)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">Fire Response Components</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Fire Frequency Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select frequency response</option>
+                                <option value="1">Highly Adapted (1)</option>
+                                <option value="2">Well Adapted (2)</option>
+                                <option value="3">Moderately Adapted (3)</option>
+                                <option value="4">Poorly Adapted (4)</option>
+                                <option value="5">Not Adapted (5)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fire Intensity Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select intensity response</option>
+                                <option value="1">Highly Tolerant (1)</option>
+                                <option value="2">Moderately Tolerant (2)</option>
+                                <option value="3">Neutral (3)</option>
+                                <option value="4">Moderately Intolerant (4)</option>
+                                <option value="5">Highly Intolerant (5)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fire Timing/Seasonality Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select timing response</option>
+                                <option value="1">Highly Flexible (1)</option>
+                                <option value="2">Moderately Flexible (2)</option>
+                                <option value="3">Neutral (3)</option>
+                                <option value="4">Moderately Sensitive (4)</option>
+                                <option value="5">Highly Sensitive (5)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fire Type/Behavior Response</label>
+                            <select class="form-input" onchange="calculateRisk()">
+                                <option value="">Select behavior response</option>
+                                <option value="1">Highly Adaptable (1)</option>
+                                <option value="2">Moderately Adaptable (2)</option>
+                                <option value="3">Neutral (3)</option>
+                                <option value="4">Moderately Vulnerable (4)</option>
+                                <option value="5">Highly Vulnerable (5)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Additional Notes</label>
+                        <textarea class="form-input" rows="3" placeholder="Record any additional observations or context for your assessments"></textarea>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="showTab('prework')">← Previous</button>
+                    <button class="btn btn-primary" onclick="showTab('treatments')" style="margin-left: 1rem;">Continue to Treatment Options</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Options Tab -->
+        <div id="treatments" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Treatment Options Comparison <span class="optional-badge">Optional</span></h3>
+                    <div>Progress: <span id="treatments-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="treatments-bar"></div>
+                </div>
+                <div class="module-content">
+                    <p style="margin-bottom: 2rem; color: #4a5568;">Compare different management treatments and their potential impacts on fire-climate risk. You can evaluate up to 3 different treatment scenarios.</p>
+
+                    <div id="treatment-scenarios">
+                        <div class="treatment-scenario">
+                            <h4>Treatment Scenario 1</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Treatment Type</label>
+                                    <select class="form-input">
+                                        <option>Select treatment</option>
+                                        <option>Prescribed Burning</option>
+                                        <option>Mechanical Thinning</option>
+                                        <option>Fuel Reduction</option>
+                                        <option>Species Management</option>
+                                        <option>No Action</option>
+                                        <option>Combined Approach</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Treatment Intensity</label>
+                                    <select class="form-input">
+                                        <option>Select intensity</option>
+                                        <option value="1">Light (1)</option>
+                                        <option value="2">Moderate (2)</option>
+                                        <option value="3">Heavy (3)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Expected Effectiveness</label>
+                                    <select class="form-input">
+                                        <option>Select effectiveness</option>
+                                        <option value="1">Low (1)</option>
+                                        <option value="2">Moderate (2)</option>
+                                        <option value="3">High (3)</option>
+                                        <option value="4">Very High (4)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Implementation Cost</label>
+                                    <select class="form-input">
+                                        <option>Select cost level</option>
+                                        <option value="1">Low (1)</option>
+                                        <option value="2">Moderate (2)</option>
+                                        <option value="3">High (3)</option>
+                                        <option value="4">Very High (4)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Treatment Description</label>
+                                <textarea class="form-input" rows="2" placeholder="Describe the treatment approach and expected outcomes"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="addTreatmentScenario()">+ Add Another Scenario</button>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="showTab('baseline')">← Previous</button>
+                        <button class="btn btn-primary" onclick="showTab('weighting')" style="margin-left: 1rem;">Continue to Weighting</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weighting Schemes Tab -->
+        <div id="weighting" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Weighting Schemes <span class="optional-badge">Optional</span></h3>
+                    <div>Progress: <span id="weighting-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="weighting-bar"></div>
+                </div>
+                <div class="module-content">
+                    <p style="margin-bottom: 2rem; color: #4a5568;">Adjust the relative importance of different assessment components based on your management priorities and site-specific conditions.</p>
+
+                    <h4>Ecosystem Component Weights</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Vegetation Structure (%) <span id="veg-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('veg', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Species Composition (%) <span id="species-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('species', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Soil Stability (%) <span id="soil-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('soil', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Hydrological Function (%) <span id="hydro-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('hydro', this.value)">
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">Fire Component Weights</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Fire Frequency (%) <span id="freq-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('freq', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fire Intensity (%) <span id="intensity-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('intensity', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Seasonal Risk (%) <span id="seasonal-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('seasonal', this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fuel Load (%) <span id="fuel-weight">25</span></label>
+                            <input type="range" class="form-input" min="0" max="100" value="25" onchange="updateWeight('fuel', this.value)">
+                        </div>
+                    </div>
+
+                    <div style="background: #e2e8f0; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                        <strong>Total Ecosystem Weight: <span id="total-eco-weight">100</span>%</strong><br>
+                        <strong>Total Fire Weight: <span id="total-fire-weight">100</span>%</strong>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="resetWeights()">Reset to Default</button>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="showTab('treatments')">← Previous</button>
+                        <button class="btn btn-primary" onclick="showTab('results')">View Results</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results" class="tab-panel">
+            <div class="results-summary">
+                <div class="risk-score" id="overall-risk-score">-</div>
+                <div class="risk-level" id="risk-level-text">Complete Assessment</div>
+                <p style="margin-top: 1rem; opacity: 0.9;">Overall Fire-Climate Interaction Risk Score</p>
+            </div>
+
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Detailed Results Analysis</h3>
+                </div>
+                <div class="module-content">
+                    <div class="form-grid" id="results-grid">
+                        <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h4>Ecosystem Risk</h4>
+                            <div style="font-size: 2rem; color: #667eea; font-weight: bold;">-</div>
+                            <div style="color: #4a5568;">Complete baseline assessment</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h4>Fire Risk</h4>
+                            <div style="font-size: 2rem; color: #e53e3e; font-weight: bold;">-</div>
+                            <div style="color: #4a5568;">Complete baseline assessment</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h4>Overall Vulnerability</h4>
