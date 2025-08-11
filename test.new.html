@@ -907,7 +907,6 @@
                             </div>
                         </div>
 
-```
                     <!-- Fire Frequency Responses -->
                     <div class="response-section">
                         <h4>Response to Changes in Fire Frequency</h4>
@@ -1490,34 +1489,31 @@
             findings.push('Priority for adaptive management strategies');
         } else if (vulnerability >= 4) {
             recommendations = 'High vulnerability requires proactive management. Implement targeted treatments.';
-```
+            <div style="color: #4a5568;">Complete baseline assessment</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h4>Fire Risk</h4>
+            <div style="font-size: 2rem; color: #e53e3e; font-weight: bold;">-</div>
+            <div style="color: #4a5568;">Complete baseline assessment</div>
+            </div>
+            <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h4>Overall Vulnerability</h4>
+            findings.push(‘High vulnerability requires management attention’);
+            findings.push(‘Good candidate for preventive treatments’);
+        } else if (vulnerability >= 1) {
+            recommendations = ‘Moderate vulnerability suggests monitoring and selective management.’;
+            findings.push(‘Moderate vulnerability with manageable risk levels’);
+            findings.push(‘Continue monitoring fire-climate interactions’);
+        } else if (vulnerability >= -2) {
+            recommendations = ‘Low vulnerability indicates good resilience. Maintain current practices.’;
+            findings.push(‘Low vulnerability - system shows resilience’);
+            findings.push(‘Current conditions appear stable’);
+        } else {
+            recommendations = ‘Very low vulnerability indicates excellent resilience.’;
+            findings.push(‘Excellent resilience to fire-climate interactions’);
+            findings.push(‘Continue successful management practices’);
+        }
 
-                            <div style="color: #4a5568;">Complete baseline assessment</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <h4>Fire Risk</h4>
-                            <div style="font-size: 2rem; color: #e53e3e; font-weight: bold;">-</div>
-                            <div style="color: #4a5568;">Complete baseline assessment</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <h4>Overall Vulnerability</h4>
-                            findings.push(‘High vulnerability requires management attention’);
-findings.push(‘Good candidate for preventive treatments’);
-} else if (vulnerability >= 1) {
-recommendations = ‘Moderate vulnerability suggests monitoring and selective management.’;
-findings.push(‘Moderate vulnerability with manageable risk levels’);
-findings.push(‘Continue monitoring fire-climate interactions’);
-} else if (vulnerability >= -2) {
-recommendations = ‘Low vulnerability indicates good resilience. Maintain current practices.’;
-findings.push(‘Low vulnerability - system shows resilience’);
-findings.push(‘Current conditions appear stable’);
-} else {
-recommendations = ‘Very low vulnerability indicates excellent resilience.’;
-findings.push(‘Excellent resilience to fire-climate interactions’);
-findings.push(‘Continue successful management practices’);
-}
-
-```
         document.getElementById('recommendation-text').textContent = recommendations;
         
         const findingsList = document.getElementById('findings-list');
