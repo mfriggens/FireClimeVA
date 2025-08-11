@@ -1501,3 +1501,276 @@
                         </div>
                         <div style="text-align: center; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <h4>Overall Vulnerability</h4>
+                            findings.push(‘High vulnerability requires management attention’);
+findings.push(‘Good candidate for preventive treatments’);
+} else if (vulnerability >= 1) {
+recommendations = ‘Moderate vulnerability suggests monitoring and selective management.’;
+findings.push(‘Moderate vulnerability with manageable risk levels’);
+findings.push(‘Continue monitoring fire-climate interactions’);
+} else if (vulnerability >= -2) {
+recommendations = ‘Low vulnerability indicates good resilience. Maintain current practices.’;
+findings.push(‘Low vulnerability - system shows resilience’);
+findings.push(‘Current conditions appear stable’);
+} else {
+recommendations = ‘Very low vulnerability indicates excellent resilience.’;
+findings.push(‘Excellent resilience to fire-climate interactions’);
+findings.push(‘Continue successful management practices’);
+}
+
+```
+        document.getElementById('recommendation-text').textContent = recommendations;
+        
+        const findingsList = document.getElementById('findings-list');
+        if (findingsList) {
+            findingsList.innerHTML = '';
+            findings.forEach(finding => {
+                const li = document.createElement('li');
+                li.textContent = finding;
+                findingsList.appendChild(li);
+            });
+        }
+    }
+
+    // Tab management function
+    function showTab(tabName) {
+        // Hide all panels
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.classList.remove('active');
+        });
+        
+        // Remove active class from all tabs
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Show selected panel
+        const targetPanel = document.getElementById(tabName);
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+        }
+        
+        // Find and activate the correct tab
+        const tabs = document.querySelectorAll('.nav-tab');
+        const tabIndex = {
+            'overview': 0,
+            'prework': 1, 
+            'exposure': 2,
+            'sensitivity': 3,
+            'baseline': 4,
+            'treatments': 5,
+            'results': 6
+        };
+        
+        if (tabs[tabIndex[tabName]]) {
+            tabs[tabIndex[tabName]].classList.add('active');
+        }
+        
+        // Update progress
+        updateProgress();
+    }
+
+    // Progress tracking
+    function updateProgress() {
+        const sections = ['prework', 'exposure', 'sensitivity', 'baseline', 'treatments'];
+        
+        sections.forEach(section => {
+            const inputs = document.querySelectorAll(`#${section} .form-input`);
+            let filled = 0;
+            
+            inputs.forEach(input => {
+                if (input.value && input.value !== '') filled++;
+            });
+            
+            const progress = inputs.length > 0 ? Math.round((filled / inputs.length) * 100) : 0;
+            
+            const progressElement = document.getElementById(`${section}-progress`);
+            const progressBar = document.getElementById(`${section}-bar`);
+            
+            if (progressElement) progressElement.textContent = progress + '%';
+            if (progressBar) progressBar.style.width = progress + '%';
+        });
+    }
+
+    // Export results function
+    function exportResults() {
+        const results = calculateOverallVulnerability();
+        
+        const data = {
+            timestamp: new Date().toISOString(),
+            siteName: document.querySelector('input[placeholder="Enter site name"]')?.value || '',
+            assessor: document.querySelector('input[placeholder="Your name"]')?.value || '',
+            overallVulnerability: results.overallVulnerability,
+            exposure: results.exposure,
+            intrinsicSensitivity: results.intrinsicSensitivity,
+            preliminaryImpact: results.preliminaryImpact,
+            componentResponses: results.componentResponses,
+            riskLevel: document.getElementById('risk-level-text').textContent
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fireclime-va-results.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Add CSS for new components
+    const additionalCSS = `
+        .exposure-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .exposure-component {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .exposure-component h5 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .sensitivity-questions {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .response-section {
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .response-section h4 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .response-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .component-group {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #cbd5e0;
+        }
+
+        .component-group h5 {
+            color: #4a5568;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .treatment-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+        }
+
+        .treatment-section h4 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .treatment-section h5 {
+            color: #4a5568;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .response-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .exposure-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    `;
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add additional CSS
+        const style = document.createElement('style');
+        style.textContent = additionalCSS;
+        document.head.appendChild(style);
+        
+        // Set up event listeners for all form inputs
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('change', function() {
+                updateProgress();
+                calculateRisk();
+            });
+        });
+        
+        // Set up specific listeners for sensitivity questions
+        document.querySelectorAll('.sensitivity-q').forEach(select => {
+            select.addEventListener('change', function() {
+                calculateIntrinsicSensitivity();
+                calculateRisk();
+            });
+        });
+        
+        // Set up listeners for exposure selects
+        document.querySelectorAll('.exposure-change, .exposure-direction').forEach(select => {
+            select.addEventListener('change', function() {
+                calculateRisk();
+            });
+        });
+        
+        // Set up listeners for response selects
+        document.querySelectorAll('.response-select').forEach(select => {
+            select.addEventListener('change', function() {
+                calculateRisk();
+            });
+        });
+        
+        // Set up listeners for treatment effects
+        document.querySelectorAll('.treatment-effect').forEach(select => {
+            select.addEventListener('change', function() {
+                calculateRisk();
+            });
+        });
+        
+        // Set today's date for assessment date
+        const dateInput = document.querySelector('input[type="date"]');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+        
+        // Initialize calculations
+        calculateRisk();
+    });
+</script>
+```
+
+</body>
+</html>
+
