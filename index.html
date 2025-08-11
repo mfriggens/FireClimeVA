@@ -322,45 +322,15 @@
                         </div>
                     </div>
 
-                    <div style="margin-top: 2rem;">
-                        <h4>Assessment Summary</h4>
-                        <div id="assessment-notes" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                            <p><strong>Key Findings:</strong></p>
-                            <ul id="findings-list">
-                                <li>Complete assessment to generate findings</li>
-                            </ul>
-                        </div>
-                        
-                        <h4>Management Recommendations</h4>
-                        <div id="recommendations" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                            <p id="recommendation-text">Complete vulnerability assessment to receive specific management recommendations based on your ecosystem's risk profile.</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin-top: 2rem;">
-                            <button class="btn btn-primary" onclick="exportResults()" style="margin-right: 1rem;">📊 Export Results</button>
-                            <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Report</button>
-                        </div>
+                    <div style="margin-top: 2rem; background: #e8f5e8; padding: 1rem; border-radius: 8px;">
+                        <h4>Exposure Scoring:</h4>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li><strong>Score = 1:</strong> Fire regime change results in further departure from DFC</li>
+                            <li><strong>Score = 0:</strong> No change OR change brings system closer to DFC</li>
+                            <li><strong>Score = -1:</strong> No fire regime change but conditions move toward DFC</li>
+                        </ul>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<script src="script.js"></script>
-```
-
-</body>
-</html>rem; background: #e8f5e8; padding: 1rem; border-radius: 8px;">
-                            <h4>Exposure Scoring:</h4>
-                            <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
-                                <li><strong>Score = 1:</strong> Fire regime change results in further departure from DFC</li>
-                                <li><strong>Score = 0:</strong> No change OR change brings system closer to DFC</li>
-                                <li><strong>Score = -1:</strong> No fire regime change but conditions move toward DFC</li>
-                            </ul>
-                        </div>
-
-```
                     <div style="margin-top: 2rem;">
                         <button class="btn btn-secondary" onclick="showTab('prework')">← Previous</button>
                         <button class="btn btn-primary" onclick="showTab('sensitivity')" style="margin-left: 1rem;">Continue to Sensitivity</button>
