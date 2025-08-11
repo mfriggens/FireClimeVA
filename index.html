@@ -1,1 +1,649 @@
+<!DOCTYPE html>
 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FireCLIME VA - Ecosystem Risk Assessment</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 FireCLIME VA</h1>
+            <div class="subtitle">Southwest FireCLIME Vulnerability Assessment Tool v3.1</div>
+        </div>
+
+```
+    <div class="main-content">
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">Overview</button>
+            <button class="nav-tab" onclick="showTab('prework')">Pre-work</button>
+            <button class="nav-tab" onclick="showTab('exposure')">Exposure</button>
+            <button class="nav-tab" onclick="showTab('sensitivity')">Intrinsic Sensitivity</button>
+            <button class="nav-tab" onclick="showTab('baseline')">Component Response</button>
+            <button class="nav-tab" onclick="showTab('treatments')">Treatments <span class="optional-badge">Optional</span></button>
+            <button class="nav-tab" onclick="showTab('results')">Results</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-panel active">
+            <div class="hero-section">
+                <h2>FireCLIME Vulnerability Assessment</h2>
+                <p>The Southwest FireCLIME Vulnerability Assessment (FireCLIME VA) allows users to compare management strategies under various climate scenarios and gauge the potential effectiveness of those strategies for reducing undesirable impacts of climate on wildfire regimes and resulting impacts of wildfire on natural ecosystems.</p>
+                
+                <p style="font-weight: 600; color: #667eea;">This tool is quick, flexible, and amendable to a range of data inputs including literature review, expert knowledge, and monitoring activities. Use it iteratively to explore various fire-climate-management scenarios for your ecosystems of interest.</p>
+                
+                <button class="btn btn-primary" onclick="showTab('prework')">Start Assessment</button>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌡️</div>
+                    <h3>Climate Scenarios</h3>
+                    <p>Assess vulnerability under different climate change scenarios and projections</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔥</div>
+                    <h3>Fire-Climate Interactions</h3>
+                    <p>Evaluate complex interactions between changing fire regimes and climate conditions</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌲</div>
+                    <h3>Ecosystem Vulnerability</h3>
+                    <p>Quantify ecosystem components' vulnerability to fire-climate stressors</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚖️</div>
+                    <h3>Management Comparison</h3>
+                    <p>Compare effectiveness of different management strategies and treatments</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pre-work Tab -->
+        <div id="prework" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Pre-work Module</h3>
+                    <div>Progress: <span id="prework-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="prework-bar"></div>
+                </div>
+                <div class="module-content">
+                    <h4>I. Site Information</h4>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Site Name</label>
+                            <input type="text" class="form-input" id="site-name" placeholder="Enter site name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Assessor Name</label>
+                            <input type="text" class="form-input" id="assessor-name" placeholder="Your name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Assessment Date</label>
+                            <input type="date" class="form-input" id="assessment-date">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ecosystem Type</label>
+                            <select class="form-input" id="ecosystem-type">
+                                <option>Select ecosystem type</option>
+                                <option>Forest</option>
+                                <option>Grassland</option>
+                                <option>Shrubland</option>
+                                <option>Wetland</option>
+                                <option>Mixed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Site Description & Desired Future Conditions (DFC)</label>
+                        <textarea class="form-input" rows="3" id="site-description" placeholder="Describe the site location, desired future conditions, and assessment objectives"></textarea>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">II. Climate Scenario Variables</h4>
+                    <p style="margin-bottom: 1rem; color: #4a5568;">Indicate expected changes for each climate variable under your chosen climate scenario:</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Growing Season Length</label>
+                            <select class="form-input" id="climate-growing">
+                                <option value="">Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mean Peak ERC (Energy Release Component)</label>
+                            <select class="form-input" id="climate-erc">
+                                <option value="">Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Summer Temperature/RH/VPD</label>
+                            <select class="form-input" id="climate-temp">
+                                <option value="">Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Drought Frequency/Duration</label>
+                            <select class="form-input" id="climate-drought">
+                                <option value="">Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Snowpack/Snow Water Equivalent</label>
+                            <select class="form-input" id="climate-snow">
+                                <option value="">Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Precipitation Patterns</label>
+                            <select class="form-input" id="climate-precip">
+                                <option value="">Select expected change</option>
+                                <option value="increase">Increase</option>
+                                <option value="decrease">Decrease</option>
+                                <option value="no-change">No Change</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 2rem;">III. Current Fire Regime Departure</h4>
+                    <p style="margin-bottom: 1rem; color: #4a5568;">Are these fire regime components currently departed from your desired conditions?</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">High Severity Patch Size</label>
+                            <select class="form-input" id="departure-size">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Fire Frequency</label>
+                            <select class="form-input" id="departure-frequency">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Soil Burn Severity</label>
+                            <select class="form-input" id="departure-severity">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Annual Area Burned</label>
+                            <select class="form-input" id="departure-area">
+                                <option value="">Select current status</option>
+                                <option value="departed">Departed from DFC</option>
+                                <option value="within-range">Within Range of DFC</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="showTab('exposure')">Continue to Exposure Assessment</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exposure Tab -->
+        <div id="exposure" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Fire Regime Exposure Assessment</h3>
+                    <div>Progress: <span id="exposure-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="exposure-bar"></div>
+                </div>
+                <div class="module-content">
+                    <p style="margin-bottom: 2rem; color: #4a5568;">
+                        <strong>Step 1:</strong> How will climate change affect each fire regime component?<br>
+                        <strong>Step 2:</strong> What does that change mean relative to your desired future conditions?
+                    </p>
+
+                    <h4>Fire Regime Component Changes</h4>
+                    <div class="exposure-grid">
+                        <div class="exposure-component">
+                            <h5>High Severity Patch Size</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on fire size</label>
+                                    <select class="form-input exposure-change" id="exposure-size-change">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" id="exposure-size-direction">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="exposure-component">
+                            <h5>Fire Frequency</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on frequency</label>
+                                    <select class="form-input exposure-change" id="exposure-frequency-change">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" id="exposure-frequency-direction">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="exposure-component">
+                            <h5>Soil Burn Severity</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on severity</label>
+                                    <select class="form-input exposure-change" id="exposure-severity-change">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" id="exposure-severity-direction">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="exposure-component">
+                            <h5>Annual Area Burned</h5>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Climate effect on area burned</label>
+                                    <select class="form-input exposure-change" id="exposure-area-change">
+                                        <option value="">Select change</option>
+                                        <option value="increase">Increase</option>
+                                        <option value="decrease">Decrease</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Meaning relative to DFC</label>
+                                    <select class="form-input exposure-direction" id="exposure-area-direction">
+                                        <option value="">Select direction</option>
+                                        <option value="further">Further from DFC</option>
+                                        <option value="closer">Closer to DFC</option>
+                                        <option value="no-change">No Change</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h4>Assessment Summary</h4>
+                        <div id="assessment-notes" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                            <p><strong>Key Findings:</strong></p>
+                            <ul id="findings-list">
+                                <li>Complete assessment to generate findings</li>
+                            </ul>
+                        </div>
+                        
+                        <h4>Management Recommendations</h4>
+                        <div id="recommendations" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                            <p id="recommendation-text">Complete vulnerability assessment to receive specific management recommendations based on your ecosystem's risk profile.</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="btn btn-primary" onclick="exportResults()" style="margin-right: 1rem;">📊 Export Results</button>
+                            <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Report</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+```
+
+</body>
+</html>rem; background: #e8f5e8; padding: 1rem; border-radius: 8px;">
+                            <h4>Exposure Scoring:</h4>
+                            <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                                <li><strong>Score = 1:</strong> Fire regime change results in further departure from DFC</li>
+                                <li><strong>Score = 0:</strong> No change OR change brings system closer to DFC</li>
+                                <li><strong>Score = -1:</strong> No fire regime change but conditions move toward DFC</li>
+                            </ul>
+                        </div>
+
+```
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="showTab('prework')">← Previous</button>
+                        <button class="btn btn-primary" onclick="showTab('sensitivity')" style="margin-left: 1rem;">Continue to Sensitivity</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Intrinsic Sensitivity Tab -->
+        <div id="sensitivity" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Intrinsic Sensitivity Assessment</h3>
+                    <div>Progress: <span id="sensitivity-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="sensitivity-bar"></div>
+                </div>
+                <div class="module-content">
+                    <p style="margin-bottom: 2rem; color: #4a5568;">
+                        Answer these questions about your ecosystem's current conditions. Each "Yes" answer indicates a source of sensitivity.
+                    </p>
+
+                    <div class="sensitivity-questions">
+                        <div class="form-group">
+                            <label class="form-label">1. Has your area of interest had fuel treatments?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q1" data-reverse="true">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No (indicates sensitivity)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">2. Are dominant plant types of your ecosystem considered drought sensitive?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q2">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">3. Does your study area exist near or within an ecotone?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q3">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">4. Are invasive plant species present within your ecosystem?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q4">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">5. Are dominant plant types dispersal limited?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q5">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">6. Is the current fire regime in your ecosystem fuel limited?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q6">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">7. Is the current fire regime in your ecosystem weather or drought limited?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q7">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">8. Do models project declines of desired dominant vegetation for this area?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q8">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">9. Is this system affected by other disturbances (e.g. insects) that negatively impact desired conditions?</label>
+                            <select class="form-input sensitivity-q" id="sensitivity-q9">
+                                <option value="">Select answer</option>
+                                <option value="yes">Yes (indicates sensitivity)</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; background: #f3f4f6; padding: 1rem; border-radius: 8px;">
+                        <h4>Intrinsic Sensitivity Score: <span id="sensitivity-score">0/9</span></h4>
+                        <p style="margin-top: 0.5rem; color: #4a5568;">
+                            This represents the proportion of sensitivity factors present in your ecosystem.
+                            Higher scores indicate greater intrinsic sensitivity to fire-climate interactions.
+                        </p>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="showTab('exposure')">← Previous</button>
+                        <button class="btn btn-primary" onclick="showTab('baseline')" style="margin-left: 1rem;">Continue to Component Response</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Response Tab -->
+        <div id="baseline" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Ecosystem & Fuel Component Response Assessment</h3>
+                    <div>Progress: <span id="baseline-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="baseline-bar"></div>
+                </div>
+                <div class="module-content">
+                    <p style="margin-bottom: 2rem; color: #4a5568;">
+                        For each fire regime component change, assess how ecosystem and fuel components will respond relative to desired future conditions.
+                        <strong>Complete all 32 assessments:</strong> 5 ecosystem × 4 fire = 20 assessments, plus 3 fuel × 4 fire = 12 assessments.
+                    </p>
+
+                    <!-- Response Matrix -->
+                    <div id="response-matrix">
+                        <!-- This will be populated by JavaScript -->
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="showTab('sensitivity')">← Previous</button>
+                        <button class="btn btn-primary" onclick="showTab('treatments')" style="margin-left: 1rem;">Continue to Treatments</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Options Tab -->
+        <div id="treatments" class="tab-panel">
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Treatment Options Assessment <span class="optional-badge">Optional</span></h3>
+                    <div>Progress: <span id="treatments-progress">0%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%" id="treatments-bar"></div>
+                </div>
+                <div class="module-content">
+                    <p style="margin-bottom: 2rem; color: #4a5568;">Evaluate how different management treatments affect fire regime components relative to desired future conditions.</p>
+
+                    <div class="treatment-section">
+                        <h4>Treatment 1</h4>
+                        <div class="form-group">
+                            <label class="form-label">Treatment Description</label>
+                            <textarea class="form-input" rows="2" id="treatment-description" placeholder="Describe the treatment approach (e.g., prescribed burning, mechanical thinning, fuel reduction)"></textarea>
+                        </div>
+
+                        <h5>Treatment Effectiveness on Fire Regime Components</h5>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">High Severity Patch Size</label>
+                                <select class="form-input treatment-effect" id="treatment-size">
+                                    <option value="">Select effectiveness</option>
+                                    <option value="5">Excellent (5)</option>
+                                    <option value="4">Very Good (4)</option>
+                                    <option value="3">Good (3)</option>
+                                    <option value="2">Fair (2)</option>
+                                    <option value="1">Poor (1)</option>
+                                    <option value="0">No Change (0)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Fire Frequency</label>
+                                <select class="form-input treatment-effect" id="treatment-frequency">
+                                    <option value="">Select effectiveness</option>
+                                    <option value="5">Excellent (5)</option>
+                                    <option value="4">Very Good (4)</option>
+                                    <option value="3">Good (3)</option>
+                                    <option value="2">Fair (2)</option>
+                                    <option value="1">Poor (1)</option>
+                                    <option value="0">No Change (0)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Soil Burn Severity</label>
+                                <select class="form-input treatment-effect" id="treatment-severity">
+                                    <option value="">Select effectiveness</option>
+                                    <option value="5">Excellent (5)</option>
+                                    <option value="4">Very Good (4)</option>
+                                    <option value="3">Good (3)</option>
+                                    <option value="2">Fair (2)</option>
+                                    <option value="1">Poor (1)</option>
+                                    <option value="0">No Change (0)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Annual Area Burned</label>
+                                <select class="form-input treatment-effect" id="treatment-area">
+                                    <option value="">Select effectiveness</option>
+                                    <option value="5">Excellent (5)</option>
+                                    <option value="4">Very Good (4)</option>
+                                    <option value="3">Good (3)</option>
+                                    <option value="2">Fair (2)</option>
+                                    <option value="1">Poor (1)</option>
+                                    <option value="0">No Change (0)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-secondary" onclick="showTab('baseline')">← Previous</button>
+                        <button class="btn btn-primary" onclick="showTab('results')" style="margin-left: 1rem;">View Results</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Tab -->
+        <div id="results" class="tab-panel">
+            <div class="results-summary">
+                <div class="risk-score" id="overall-risk-score">-</div>
+                <div class="risk-level" id="risk-level-text">Complete Assessment</div>
+                <p style="margin-top: 1rem; opacity: 0.9;">Overall FireCLIME Vulnerability Score</p>
+            </div>
+
+            <div class="module-section">
+                <div class="module-header">
+                    <h3>Detailed Results Analysis</h3>
+                </div>
+                <div class="module-content">
+                    <div class="form-grid" id="results-grid">
+                        <!-- Results will be populated by JavaScript -->
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h4>Component Summary Scores</h4>
+                        <div id="component-scores">
+                            <!-- Component scores will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h4>Assessment Summary</h4>
+                        <div id="assessment-notes" style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                            <p><strong>Key Findings:</strong></p>
+                            <ul id="findings-list">
+                                <li>Complete assessment to generate findings</li>
+                            </ul>
+                        </div>
+                        
+                        <h4>Management Recommendations</h4>
+                        <div id="recommendations" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                            <p id="recommendation-text">Complete vulnerability assessment to receive specific management recommendations based on your ecosystem's risk profile.</p>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="btn btn-primary" onclick="exportResults()" style="margin-right: 1rem;">📊 Export Results</button>
+                            <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Report</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+```
+
+</body>
+</html>
