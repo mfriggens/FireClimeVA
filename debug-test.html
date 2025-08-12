@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .btn { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; margin: 5px; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .nav-tab { padding: 10px; background: #f8f9fa; border: 1px solid #ddd; cursor: pointer; margin: 5px; }
+        .nav-tab.active { background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    
+    <div>
+        <button class="nav-tab active" onclick="showTab('tab1')">Tab 1</button>
+        <button class="nav-tab" onclick="showTab('tab2')">Tab 2</button>
+    </div>
+    
+    <div id="tab1" class="tab-panel active">
+        <h2>Tab 1 Content</h2>
+        <p>This is tab 1</p>
+        <button class="btn" onclick="showTab('tab2')">Go to Tab 2</button>
+    </div>
+    
+    <div id="tab2" class="tab-panel">
+        <h2>Tab 2 Content</h2>
+        <p>This is tab 2</p>
+        <button class="btn" onclick="showTab('tab1')">Go to Tab 1</button>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            console.log('showTab called with:', tabName);
+            
+            // Hide all panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected panel
+            const targetPanel = document.getElementById(tabName);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+                console.log('Activated panel:', tabName);
+            } else {
+                console.error('Panel not found:', tabName);
+            }
+            
+            // Find and activate the correct tab
+            const tabs = document.querySelectorAll('.nav-tab');
+            const tabTexts = ['Tab 1', 'Tab 2'];
+            const tabIds = ['tab1', 'tab2'];
+            const tabIndex = tabIds.indexOf(tabName);
+            
+            if (tabs[tabIndex]) {
+                tabs[tabIndex].classList.add('active');
+                console.log('Activated tab:', tabIndex);
+            }
+        }
+        
+        console.log('Debug script loaded');
+    </script>
+</body>
+</html>
