@@ -25,7 +25,7 @@ The FireCLIME VA tool allows land managers and researchers to assess ecosystem v
 
 ### 📊 Assessment Modules
 
-1. **Pre-work Module**
+1. **Scenario Building Module**
 - Site information and assessment parameters
 - Ecosystem type classification
 - Assessor details and documentation
@@ -35,7 +35,7 @@ The FireCLIME VA tool allows land managers and researchers to assess ecosystem v
 - Vulnerability scoring (1-5 scale)
 1. **Treatment Options** *(Optional)*
 - Compare up to 3 management scenarios
-- Effectiveness and cost analysis
+- Effectiveness analysis
 - Treatment intensity evaluation
 1. **Weighting Schemes** *(Optional)*
 - Customize component importance
@@ -176,9 +176,10 @@ This project is based on public domain research from the USDA Forest Service. Th
 
 ## 🤝 Acknowledgments
 
+- **Joint Fire Sciences Program**
 - **USDA Forest Service Rocky Mountain Research Station** for the original FireCLIME VA methodology
 - **Southwest FireCLIME Partnership** for the scientific foundation
-- **Lead Researcher:** Dr. Megan Friggens and the FireCLIME research team
+- **Lead Researcher:** Dr. Megan Friggens and the SW FireCLIME research team
 
 ## 📞 Support
 
