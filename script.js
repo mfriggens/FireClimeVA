@@ -1,4 +1,4 @@
-// FireCLIME VA JavaScript Functions - Updated with Corrected Calculations
+// FireCLIME VA JavaScript v3.2 - Complete Implementation
 
 // Global data storage
 let assessmentData = {
@@ -6,7 +6,11 @@ let assessmentData = {
     exposure: {},
     sensitivity: {},
     responses: {},
-    treatments: {},
+    treatments: {
+        treatment1: {},
+        treatment2: {},
+        treatment3: {}
+    },
     results: {}
 };
 
@@ -39,52 +43,61 @@ const fuelComponentNames = {
 
 // Tooltip content
 const tooltipContent = {
-    "climate-vars": `<strong>Climate Variables:</strong> The VA tool includes climate components that (1) are identified as important in studies of Southwestern climate-fire interactions, (2) have sufficient data or information within scientific literature to enable judgment of impacts, and (3) are of relevance to fire management. These components significantly impact wildfire regimes in multiple and complex ways.`,
+    "climate-vars": `<strong>Climate Variables:</strong><br>The VA tool includes climate components that are (1) identified as important in Southwestern climate-fire interactions, (2) have sufficient data in scientific literature, and (3) are relevant to fire management. These significantly impact wildfire regimes in complex ways.`,
     
-    "fire-size": `<strong>High Severity Patch Size:</strong> The spatial extent of areas burned at high severity affects post-fire recovery, erosion potential, and ecosystem structure. Large patches may exceed regeneration thresholds for some species.`,
+    "fire-size": `<strong>High Severity Patch Size:</strong><br>The spatial extent of high severity burn patches affects post-fire recovery, erosion potential, and ecosystem structure. Large patches may exceed regeneration thresholds for some species. Distance from unburned forest edge greatly limits regeneration after high-severity fire.`,
     
-    "fire-frequency": `<strong>Fire Frequency:</strong> Fire frequency, or the number of fire events per unit time, heavily influences which plant species or functional groups dominate in a given area. If fire is too frequent or infrequent to allow a species to complete its life cycle, that species will be excluded from the system.`,
+    "fire-frequency": `<strong>Fire Frequency:</strong><br>The number of fire events per unit time heavily influences which plant species or functional groups dominate. If fire is too frequent or infrequent to allow a species to complete its life cycle, that species will be excluded from the system.`,
     
-    "fire-severity": `<strong>Soil Burn Severity:</strong> The degree to which soil is altered by fire, affecting soil structure, nutrient availability, and erosion potential. High severity burns can sterilize soil and create hydrophobic conditions.`,
+    "fire-severity": `<strong>Soil Burn Severity:</strong><br>The degree to which soil is altered by fire affects soil structure, nutrient availability, and erosion potential. High severity burns can sterilize soil, create hydrophobic conditions, and reduce water infiltration.`,
     
-    "fire-area": `<strong>Annual Area Burned:</strong> Annual area burned is strongly regulated by combinations of both fire-year and antecedent conditions, particularly drought and seasonal precipitation. Area burned is sensitive to climate drivers because the combination of prior-season precipitation and current drought promotes fire spread over large areas.`,
+    "fire-area": `<strong>Annual Area Burned:</strong><br>Strongly regulated by fire-year and antecedent conditions, particularly drought and seasonal precipitation. Area burned is sensitive to climate drivers because combinations of prior-season precipitation and current drought promote fire spread over large areas.`,
     
-    "ecosystem-components": `<strong>Ecosystem & Fuel Components:</strong> These responses evaluate how changes in fire regimes affect key ecosystem processes (survivorship, recruitment, composition, structure, erosion) and fuel characteristics (loading, horizontal continuity, vertical arrangement). Select whether expected changes move components further from, closer to, or maintain distance from Desired Future Conditions.`
+    "ecosystem-components": `<strong>Ecosystem & Fuel Components:</strong><br>Evaluate how changes in fire regimes affect key ecosystem processes (survivorship, recruitment, composition, structure, erosion) and fuel characteristics (loading, horizontal continuity, vertical arrangement). Select whether expected changes move components further from, closer to, or maintain distance from Desired Future Conditions.`
 };
 
-// Initialize the application
+// Initialize application
 document.addEventListener("DOMContentLoaded", function() {
+    initializeExposureGrid();
     initializeResponseMatrix();
+    initializeTreatmentSections();
     setupEventListeners();
     setupTooltips();
     setDefaultDate();
+    updateFireDepartureSummary();
     calculateRisk();
 });
 
 // Setup tooltip system
 function setupTooltips() {
-    const infoIcons = document.querySelectorAll('.info-icon');
-    const tooltip = document.getElementById('tooltip-container');
-    
-    infoIcons.forEach(icon => {
-        icon.addEventListener('mouseenter', function(e) {
-            const tooltipKey = this.dataset.tooltip;
+    document.addEventListener('mouseover', function(e) {
+        if (e.target.classList.contains('info-icon')) {
+            const tooltipKey = e.target.dataset.tooltip;
             const content = tooltipContent[tooltipKey];
+            const tooltip = document.getElementById('tooltip-container');
             
-            if (content) {
+            if (content && tooltip) {
                 tooltip.innerHTML = content;
                 tooltip.style.display = 'block';
                 positionTooltip(e, tooltip);
             }
-        });
-        
-        icon.addEventListener('mouseleave', function() {
-            tooltip.style.display = 'none';
-        });
-        
-        icon.addEventListener('mousemove', function(e) {
-            positionTooltip(e, tooltip);
-        });
+        }
+    });
+    
+    document.addEventListener('mouseout', function(e) {
+        if (e.target.classList.contains('info-icon')) {
+            const tooltip = document.getElementById('tooltip-container');
+            if (tooltip) tooltip.style.display = 'none';
+        }
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (e.target.classList.contains('info-icon')) {
+            const tooltip = document.getElementById('tooltip-container');
+            if (tooltip && tooltip.style.display === 'block') {
+                positionTooltip(e, tooltip);
+            }
+        }
     });
 }
 
@@ -95,44 +108,44 @@ function positionTooltip(e, tooltip) {
     tooltip.style.top = y + 'px';
 }
 
-// Tab management
-function showTab(tabName) {
-    // Hide all panels
-    document.querySelectorAll(".tab-panel").forEach(panel => {
-        panel.classList.remove("active");
+// Initialize exposure grid
+function initializeExposureGrid() {
+    const container = document.getElementById("exposure-container");
+    if (!container) return;
+    
+    let html = "";
+    fireComponents.forEach(fireComp => {
+        html += `
+            <div class="exposure-component">
+                <h5>
+                    ${fireComponentNames[fireComp]} 
+                    <span class="info-icon" data-tooltip="fire-${fireComp}">ℹ️</span>
+                </h5>
+                <div class="form-group">
+                    <label class="form-label">Expected Change Direction</label>
+                    <select class="form-input" id="exposure-${fireComp}-change" data-component="${fireComp}">
+                        <option value="">Select expected change</option>
+                        <option value="increase">Increase</option>
+                        <option value="decrease">Decrease</option>
+                        <option value="no-change">No Change</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Relationship to DFC</label>
+                    <select class="form-input" id="exposure-${fireComp}-direction" data-component="${fireComp}">
+                        <option value="">Select relationship</option>
+                        <option value="further">Further from DFC</option>
+                        <option value="closer">Closer to DFC</option>
+                        <option value="within">Within DFC Range</option>
+                    </select>
+                </div>
+            </div>
+        `;
     });
-    
-    // Remove active class from all tabs
-    document.querySelectorAll(".nav-tab").forEach(tab => {
-        tab.classList.remove("active");
-    });
-    
-    // Show selected panel
-    const targetPanel = document.getElementById(tabName);
-    if (targetPanel) {
-        targetPanel.classList.add("active");
-    }
-    
-    // Find and activate the correct tab
-    const tabs = document.querySelectorAll(".nav-tab");
-    const tabIndex = {
-        "overview": 0,
-        "scenario": 1, 
-        "exposure": 2,
-        "sensitivity": 3,
-        "baseline": 4,
-        "treatments": 5,
-        "results": 6
-    };
-    
-    if (tabs[tabIndex[tabName]]) {
-        tabs[tabIndex[tabName]].classList.add("active");
-    }
-    
-    updateProgress();
+    container.innerHTML = html;
 }
 
-// Initialize the response matrix (32 assessments: 20 ecosystem + 12 fuel)
+// Initialize response matrix with dynamic fire regime changes
 function initializeResponseMatrix() {
     const matrixContainer = document.getElementById("response-matrix");
     if (!matrixContainer) return;
@@ -142,13 +155,14 @@ function initializeResponseMatrix() {
     fireComponents.forEach(fireComp => {
         matrixHTML += `
             <div class="fire-component-section">
-                <h4 class="fire-component-title">Response to Changes in ${fireComponentNames[fireComp]}</h4>
+                <h4 class="fire-component-title">
+                    Response to <span class="dynamic-text" id="fire-change-${fireComp}">Changes in</span> ${fireComponentNames[fireComp]}
+                </h4>
                 <div class="component-groups">
                     <div class="component-group">
                         <h6>Ecosystem Components</h6>
         `;
         
-        // Add ecosystem components for this fire component
         ecosystemComponents.forEach(ecoComp => {
             matrixHTML += `
                 <div class="component-item">
@@ -169,7 +183,6 @@ function initializeResponseMatrix() {
                         <h6>Fuel Components</h6>
         `;
         
-        // Add fuel components for this fire component
         fuelComponents.forEach(fuelComp => {
             matrixHTML += `
                 <div class="component-item">
@@ -194,20 +207,130 @@ function initializeResponseMatrix() {
     matrixContainer.innerHTML = matrixHTML;
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    // Add listeners for all form inputs
-    document.addEventListener("change", function(e) {
-        if (e.target.classList.contains("form-input")) {
-            updateProgress();
-            calculateRisk();
+// Initialize treatment sections (3 treatments)
+function initializeTreatmentSections() {
+    for (let i = 1; i <= 3; i++) {
+        // Fire components
+        let fireHTML = "";
+        fireComponents.forEach(comp => {
+            fireHTML += `
+                <div class="form-group">
+                    <label class="form-label">${fireComponentNames[comp]}</label>
+                    <select class="form-input treatment-effect" id="treatment-${i}-fire-${comp}">
+                        <option value="">Select effectiveness</option>
+                        <option value="5">Excellent (5)</option>
+                        <option value="4">Very Good (4)</option>
+                        <option value="3">Good (3)</option>
+                        <option value="2">Fair (2)</option>
+                        <option value="1">Poor (1)</option>
+                        <option value="0">No Change (0)</option>
+                    </select>
+                </div>
+            `;
+        });
+        const fireContainer = document.getElementById(`treatment-${i}-fire-components`);
+        if (fireContainer) fireContainer.innerHTML = fireHTML;
+        
+        // Fuel components
+        let fuelHTML = "";
+        fuelComponents.forEach(comp => {
+            fuelHTML += `
+                <div class="form-group">
+                    <label class="form-label">${fuelComponentNames[comp]}</label>
+                    <select class="form-input treatment-effect" id="treatment-${i}-fuel-${comp}">
+                        <option value="">Select effectiveness</option>
+                        <option value="5">Excellent (5)</option>
+                        <option value="4">Very Good (4)</option>
+                        <option value="3">Good (3)</option>
+                        <option value="2">Fair (2)</option>
+                        <option value="1">Poor (1)</option>
+                        <option value="0">No Change (0)</option>
+                    </select>
+                </div>
+            `;
+        });
+        const fuelContainer = document.getElementById(`treatment-${i}-fuel-components`);
+        if (fuelContainer) fuelContainer.innerHTML = fuelHTML;
+        
+        // Ecosystem components
+        let ecoHTML = "";
+        ecosystemComponents.forEach(comp => {
+            ecoHTML += `
+                <div class="form-group">
+                    <label class="form-label">${ecosystemComponentNames[comp]}</label>
+                    <select class="form-input treatment-effect" id="treatment-${i}-ecosystem-${comp}">
+                        <option value="">Select effectiveness</option>
+                        <option value="5">Excellent (5)</option>
+                        <option value="4">Very Good (4)</option>
+                        <option value="3">Good (3)</option>
+                        <option value="2">Fair (2)</option>
+                        <option value="1">Poor (1)</option>
+                        <option value="0">No Change (0)</option>
+                    </select>
+                </div>
+            `;
+        });
+        const ecoContainer = document.getElementById(`treatment-${i}-ecosystem-components`);
+        if (ecoContainer) ecoContainer.innerHTML = ecoHTML;
+    }
+}
+
+// Update fire departure summary in sensitivity tab
+function updateFireDepartureSummary() {
+    const summary = document.getElementById("fire-departure-summary");
+    if (!summary) return;
+    
+    const departures = [];
+    fireComponents.forEach(comp => {
+        const select = document.getElementById(`departure-${comp}`);
+        if (select && select.value === "yes") {
+            departures.push(fireComponentNames[comp]);
         }
     });
     
-    // Specific listeners for sensitivity questions
+    if (departures.length > 0) {
+        summary.textContent = `Currently departed: ${departures.join(", ")}`;
+    } else {
+        summary.textContent = "No fire regime components currently departed from DFC.";
+    }
+}
+
+// Update dynamic fire regime change text
+function updateFireRegimeChangeText() {
+    fireComponents.forEach(comp => {
+        const changeSelect = document.getElementById(`exposure-${comp}-change`);
+        const textElement = document.getElementById(`fire-change-${comp}`);
+        
+        if (changeSelect && textElement) {
+            const changeValue = changeSelect.value;
+            let changeText = "Changes in";
+            
+            if (changeValue === "increase") changeText = "Increase in";
+            else if (changeValue === "decrease") changeText = "Decrease in";
+            else if (changeValue === "no-change") changeText = "No Change in";
+            
+            textElement.textContent = changeText;
+        }
+    });
+}
+
+// Setup event listeners
+function setupEventListeners() {
     document.addEventListener("change", function(e) {
-        if (e.target.classList.contains("sensitivity-q")) {
-            calculateIntrinsicSensitivity();
+        if (e.target.classList.contains("form-input")) {
+            updateProgress();
+            
+            // Update fire departure summary when departure questions change
+            if (e.target.classList.contains("fire-departure-q")) {
+                updateFireDepartureSummary();
+            }
+            
+            // Update dynamic text when exposure changes
+            if (e.target.id && e.target.id.includes("exposure-")) {
+                updateFireRegimeChangeText();
+            }
+            
+            calculateRisk();
         }
     });
 }
@@ -220,7 +343,40 @@ function setDefaultDate() {
     }
 }
 
-// Calculate Exposure Scores - CORRECTED PER RUBRIC
+// Tab management
+function showTab(tabName) {
+    document.querySelectorAll(".tab-panel").forEach(panel => {
+        panel.classList.remove("active");
+    });
+    
+    document.querySelectorAll(".nav-tab").forEach(tab => {
+        tab.classList.remove("active");
+    });
+    
+    const targetPanel = document.getElementById(tabName);
+    if (targetPanel) {
+        targetPanel.classList.add("active");
+    }
+    
+    const tabs = document.querySelectorAll(".nav-tab");
+    const tabIndex = {
+        "overview": 0,
+        "scenario": 1, 
+        "exposure": 2,
+        "sensitivity": 3,
+        "baseline": 4,
+        "treatments": 5,
+        "results": 6
+    };
+    
+    if (tabs[tabIndex[tabName]]) {
+        tabs[tabIndex[tabName]].classList.add("active");
+    }
+    
+    updateProgress();
+}
+
+// Calculate Exposure Scores
 function calculateExposure() {
     const exposureScores = {};
     
@@ -239,11 +395,11 @@ function calculateExposure() {
             // Score = -1: No fire regime change AND moves toward DFC
             
             if (hasChange && direction === "further") {
-                score = 1; // Change AND further from DFC
+                score = 1;
             } else if (!hasChange && (direction === "closer" || direction === "within")) {
-                score = -1; // No change but moving toward DFC
+                score = -1;
             } else {
-                score = 0; // No change OR change moves closer
+                score = 0;
             }
         }
         
@@ -253,30 +409,39 @@ function calculateExposure() {
     return exposureScores;
 }
 
-// Calculate Intrinsic Sensitivity - CORRECTED PER RUBRIC
+// Calculate Intrinsic Sensitivity (13 questions total)
 function calculateIntrinsicSensitivity() {
-    const sensitivityQuestions = document.querySelectorAll(".sensitivity-q");
     let sensitivityCount = 0;
     let totalQuestions = 0;
     
-    sensitivityQuestions.forEach(select => {
-        if (select.value) {
+    // Question 1 (reversed - No = sensitivity)
+    const q1 = document.getElementById("sensitivity-q1");
+    if (q1 && q1.value) {
+        totalQuestions++;
+        if (q1.value === "no") sensitivityCount++;
+    }
+    
+    // Questions 2-5: Fire regime departure questions from scenario building
+    fireComponents.forEach(comp => {
+        const select = document.getElementById(`departure-${comp}`);
+        if (select && select.value) {
             totalQuestions++;
-            const isReverse = select.dataset.reverse === "true";
-            
-            if (isReverse) {
-                // Question 1 is reversed (No = sensitivity)
-                if (select.value === "no") sensitivityCount++;
-            } else {
-                // All other questions (Yes = sensitivity)
-                if (select.value === "yes") sensitivityCount++;
-            }
+            if (select.value === "yes") sensitivityCount++;
         }
     });
     
+    // Questions 6-13 (regular - Yes = sensitivity)
+    for (let i = 6; i <= 13; i++) {
+        const select = document.getElementById(`sensitivity-q${i}`);
+        if (select && select.value) {
+            totalQuestions++;
+            if (select.value === "yes") sensitivityCount++;
+        }
+    }
+    
     // Calculate proportion and standardize to 0-10 scale
     const proportion = totalQuestions > 0 ? sensitivityCount / totalQuestions : 0;
-    const standardizedScore = proportion * 10; // Standardize to 0-10 range
+    const standardizedScore = proportion * 10;
     
     return {
         rawCount: sensitivityCount,
@@ -286,7 +451,7 @@ function calculateIntrinsicSensitivity() {
     };
 }
 
-// Calculate Component Sensitivity - CORRECTED PER RUBRIC
+// Calculate Component Sensitivity
 function calculateComponentSensitivity(exposureScores) {
     const componentScores = {
         byFire: {},
@@ -323,7 +488,6 @@ function calculateComponentSensitivity(exposureScores) {
                 let score = 0;
                 if (select.value === "further") score = 1;
                 else if (select.value === "closer") score = -1;
-                // no-change = 0
                 
                 ecosystemSum += score;
                 componentScores.byComponent[ecoComp] = (componentScores.byComponent[ecoComp] || 0) + score;
@@ -337,7 +501,6 @@ function calculateComponentSensitivity(exposureScores) {
                 let score = 0;
                 if (select.value === "further") score = 1;
                 else if (select.value === "closer") score = -1;
-                // no-change = 0
                 
                 fuelSum += score;
                 componentScores.byComponent[fuelComp] = (componentScores.byComponent[fuelComp] || 0) + score;
@@ -363,7 +526,7 @@ function calculateComponentSensitivity(exposureScores) {
     return componentScores;
 }
 
-// Calculate Impact - CORRECTED PER RUBRIC
+// Calculate Impact
 function calculateImpact(exposureScores, componentSensitivity) {
     const impactScores = {
         byFire: {},
@@ -390,7 +553,6 @@ function calculateImpact(exposureScores, componentSensitivity) {
         const exposure = exposureScores[fireComp];
         
         if (exposure === 1) {
-            // Only calculate impact when there is negative exposure
             impactScores.byFire[fireComp].ecosystem = 
                 exposure * componentSensitivity.byFire[fireComp].ecosystemStandardized;
             impactScores.byFire[fireComp].fuel = 
@@ -421,7 +583,6 @@ function calculateImpact(exposureScores, componentSensitivity) {
                 }
             });
         }
-        // If exposure = 0 or -1, impact remains 0 (already initialized)
     });
     
     // Standardize individual component impacts (multiply by 2.5)
@@ -429,7 +590,7 @@ function calculateImpact(exposureScores, componentSensitivity) {
         impactScores.byComponent[comp] *= 2.5;
     });
     
-    // Calculate overall impact (sum of all fire component impacts)
+    // Calculate overall impact
     fireComponents.forEach(fireComp => {
         impactScores.overall += impactScores.byFire[fireComp].total;
     });
@@ -437,42 +598,54 @@ function calculateImpact(exposureScores, componentSensitivity) {
     return impactScores;
 }
 
-// Calculate Treatment Effects - CORRECTED PER RUBRIC
+// Calculate Treatment Effects (all 3 treatments)
 function calculateTreatmentEffects() {
-    const treatmentScores = {
-        byFireComponent: {},
-        ecosystem: 0,
-        fuel: 0,
-        total: 0,
-        standardizedTotal: 0
-    };
+    const treatments = {};
     
-    let totalTreatmentScore = 0;
-    
-    fireComponents.forEach(fireComp => {
-        const select = document.getElementById(`treatment-${fireComp}`);
-        let score = 0;
+    for (let i = 1; i <= 3; i++) {
+        const treatmentScores = {
+            fire: {},
+            fuel: {},
+            ecosystem: {},
+            totalFire: 0,
+            totalFuel: 0,
+            totalEcosystem: 0,
+            total: 0,
+            standardizedTotal: 0
+        };
         
-        if (select && select.value) {
-            score = parseInt(select.value) || 0;
-        }
+        // Fire components
+        fireComponents.forEach(comp => {
+            const select = document.getElementById(`treatment-${i}-fire-${comp}`);
+            const score = select && select.value ? parseInt(select.value) : 0;
+            treatmentScores.fire[comp] = score;
+            treatmentScores.totalFire += score;
+        });
         
-        treatmentScores.byFireComponent[fireComp] = score;
-        totalTreatmentScore += score;
-    });
+        // Fuel components
+        fuelComponents.forEach(comp => {
+            const select = document.getElementById(`treatment-${i}-fuel-${comp}`);
+            const score = select && select.value ? parseInt(select.value) : 0;
+            treatmentScores.fuel[comp] = score;
+            treatmentScores.totalFuel += score;
+        });
+        
+        // Ecosystem components
+        ecosystemComponents.forEach(comp => {
+            const select = document.getElementById(`treatment-${i}-ecosystem-${comp}`);
+            const score = select && select.value ? parseInt(select.value) : 0;
+            treatmentScores.ecosystem[comp] = score;
+            treatmentScores.totalEcosystem += score;
+        });
+        
+        // Total and standardized
+        treatmentScores.total = treatmentScores.totalFire + treatmentScores.totalFuel + treatmentScores.totalEcosystem;
+        treatmentScores.standardizedTotal = (treatmentScores.totalEcosystem + treatmentScores.totalFuel) * 0.25;
+        
+        treatments[`treatment${i}`] = treatmentScores;
+    }
     
-    treatmentScores.total = totalTreatmentScore;
-    
-    // Calculate ecosystem and fuel treatment effects
-    // (This would require more detail about which components are affected)
-    // For now, we'll distribute proportionally
-    treatmentScores.ecosystem = totalTreatmentScore * 0.625; // 5/8 (5 ecosystem out of 8 total)
-    treatmentScores.fuel = totalTreatmentScore * 0.375; // 3/8 (3 fuel out of 8 total)
-    
-    // Standardize total per rubric: (Ecosystem + Fuel) * 0.25
-    treatmentScores.standardizedTotal = (treatmentScores.ecosystem + treatmentScores.fuel) * 0.25;
-    
-    return treatmentScores;
+    return treatments;
 }
 
 // Calculate overall risk/vulnerability
@@ -489,25 +662,29 @@ function calculateRisk() {
     // Step 4: Calculate Impact
     const impactScores = calculateImpact(exposureScores, componentSensitivity);
     
-    // Step 5: Calculate preliminary impact score (sum of all ecosystem and fuel component impacts)
+    // Step 5: Calculate preliminary impact score
     const preliminaryImpact = impactScores.overall;
     
     // Step 6: Calculate vulnerability before treatment
-    // Per rubric: ((preliminary impact) + (intrinsic sensitivity)) * 0.22
     const vulnerabilityBeforeTreatment = (preliminaryImpact + intrinsicSensitivity.standardizedScore) * 0.22;
     
     // Step 7: Calculate treatment effects
     const treatmentEffects = calculateTreatmentEffects();
     
-    // Step 8: Calculate new vulnerability
-    // Per rubric: Vulnerability before treatment - Standardized total treatment
-    const newVulnerability = vulnerabilityBeforeTreatment - treatmentEffects.standardizedTotal;
+    // Step 8: Calculate vulnerabilities with each treatment
+    const vulnerabilities = {
+        beforeTreatment: vulnerabilityBeforeTreatment,
+        treatment1: vulnerabilityBeforeTreatment - treatmentEffects.treatment1.standardizedTotal,
+        treatment2: vulnerabilityBeforeTreatment - treatmentEffects.treatment2.standardizedTotal,
+        treatment3: vulnerabilityBeforeTreatment - treatmentEffects.treatment3.standardizedTotal
+    };
     
-    // Step 9: Calculate treatment effectiveness
-    let treatmentEffectiveness = 0;
-    if (vulnerabilityBeforeTreatment !== 0) {
-        treatmentEffectiveness = (newVulnerability - vulnerabilityBeforeTreatment) / vulnerabilityBeforeTreatment;
-    }
+    // Best treatment (lowest vulnerability)
+    const bestVulnerability = Math.min(
+        vulnerabilities.treatment1,
+        vulnerabilities.treatment2,
+        vulnerabilities.treatment3
+    );
     
     // Store results
     assessmentData.results = {
@@ -515,20 +692,19 @@ function calculateRisk() {
         sensitivity: intrinsicSensitivity,
         componentSensitivity: componentSensitivity,
         impact: impactScores,
-        treatment: treatmentEffects,
-        vulnerability: {
-            preliminary: preliminaryImpact,
-            beforeTreatment: vulnerabilityBeforeTreatment,
-            finalVulnerability: newVulnerability,
-            treatmentEffectiveness: treatmentEffectiveness
-        }
+        treatments: treatmentEffects,
+        vulnerability: vulnerabilities,
+        finalVulnerability: treatmentEffects.treatment1.total > 0 || 
+                           treatmentEffects.treatment2.total > 0 || 
+                           treatmentEffects.treatment3.total > 0 ? 
+                           bestVulnerability : vulnerabilityBeforeTreatment
     };
     
     // Update displays
     updateResultsDisplay();
     updateComponentScores();
     updateRecommendations();
-    updateTreatmentChart();
+    updateTreatmentCharts();
 }
 
 // Update results display
@@ -536,7 +712,7 @@ function updateResultsDisplay() {
     const results = assessmentData.results;
     if (!results || !results.vulnerability) return;
     
-    const vulnerability = results.vulnerability.finalVulnerability;
+    const vulnerability = results.finalVulnerability;
     
     // Update overall score
     const scoreElement = document.getElementById("overall-risk-score");
@@ -569,20 +745,20 @@ function updateResultsDisplay() {
                 <div class="score-description">Combined impact (-10 to +10)</div>
             </div>
             <div class="score-card">
-                <h4>Treatment Effect</h4>
-                <div class="score-value" style="color: #16a34a;">${results.treatment.standardizedTotal.toFixed(1)}</div>
-                <div class="score-description">Management benefit</div>
+                <h4>Before Treatment</h4>
+                <div class="score-value" style="color: #dc2626;">${results.vulnerability.beforeTreatment.toFixed(1)}</div>
+                <div class="score-description">Vulnerability (-7 to +10)</div>
             </div>
             <div class="score-card">
-                <h4>Overall Vulnerability</h4>
+                <h4>Final Vulnerability</h4>
                 <div class="score-value" style="color: #059669;">${vulnerability.toFixed(1)}</div>
-                <div class="score-description">FireCLIME VA Score (-7 to +10)</div>
+                <div class="score-description">After best treatment</div>
             </div>
         `;
     }
 }
 
-// Update component scores with separation between fire regime and ecosystem/fuel
+// Update component scores
 function updateComponentScores() {
     const results = assessmentData.results;
     if (!results || !results.impact) return;
@@ -603,7 +779,7 @@ function updateComponentScores() {
                         <div class="component-score-value" style="color: ${impact.total >= 0 ? '#dc2626' : '#16a34a'}">
                             ${impact.total.toFixed(1)}
                         </div>
-                        <div class="score-description" style="font-size: 0.8rem;">Impact from climate</div>
+                        <div class="score-description" style="font-size: 0.8rem;">Climate impact on fire</div>
                     </div>
                 `;
             } else {
@@ -611,7 +787,7 @@ function updateComponentScores() {
                     <div class="component-score-item" style="opacity: 0.6;">
                         <h6>${fireComponentNames[fireComp]}</h6>
                         <div class="component-score-value" style="color: #6b7280;">-</div>
-                        <div class="score-description" style="font-size: 0.8rem;">No exposure calculated</div>
+                        <div class="score-description" style="font-size: 0.8rem;">No exposure calculated<br>(no impact indicated)</div>
                     </div>
                 `;
             }
@@ -627,8 +803,8 @@ function updateComponentScores() {
     
     let html = '<div class="component-scores-grid">';
     
-    // Ecosystem components section
-    html += '<div style="grid-column: 1/-1; margin-top: 1rem; margin-bottom: 0.5rem;"><strong style="color: #2d3748;">Ecosystem Components</strong></div>';
+    // Ecosystem components
+    html += '<div style="grid-column: 1/-1; margin-top: 1rem; margin-bottom: 0.5rem; padding: 0.5rem; background: #f0f9ff; border-radius: 4px;"><strong style="color: #0369a1;">Ecosystem Components</strong></div>';
     ecosystemComponents.forEach(component => {
         const impact = results.impact.byComponent[component];
         if (impact !== undefined) {
@@ -639,14 +815,14 @@ function updateComponentScores() {
                     <div class="component-score-value" style="color: ${impact >= 0 ? '#dc2626' : '#16a34a'}">
                         ${impact.toFixed(1)}
                     </div>
-                    <div class="score-description" style="font-size: 0.8rem;">${impact > 0 ? 'More vulnerable' : impact < 0 ? 'Less vulnerable' : 'Neutral'}</div>
+                    <div class="score-description" style="font-size: 0.8rem;">${impact > 0 ? '↑ More vulnerable' : impact < 0 ? '↓ Less vulnerable' : '= Neutral'}</div>
                 </div>
             `;
         }
     });
     
-    // Fuel components section
-    html += '<div style="grid-column: 1/-1; margin-top: 1rem; margin-bottom: 0.5rem;"><strong style="color: #2d3748;">Fuel Components</strong></div>';
+    // Fuel components
+    html += '<div style="grid-column: 1/-1; margin-top: 1rem; margin-bottom: 0.5rem; padding: 0.5rem; background: #fef3c7; border-radius: 4px;"><strong style="color: #92400e;">Fuel Components</strong></div>';
     fuelComponents.forEach(component => {
         const impact = results.impact.byComponent[component];
         if (impact !== undefined) {
@@ -657,7 +833,7 @@ function updateComponentScores() {
                     <div class="component-score-value" style="color: ${impact >= 0 ? '#dc2626' : '#16a34a'}">
                         ${impact.toFixed(1)}
                     </div>
-                    <div class="score-description" style="font-size: 0.8rem;">${impact > 0 ? 'More vulnerable' : impact < 0 ? 'Less vulnerable' : 'Neutral'}</div>
+                    <div class="score-description" style="font-size: 0.8rem;">${impact > 0 ? '↑ More vulnerable' : impact < 0 ? '↓ Less vulnerable' : '= Neutral'}</div>
                 </div>
             `;
         }
@@ -667,63 +843,96 @@ function updateComponentScores() {
     componentScoresContainer.innerHTML = html;
 }
 
-// Update treatment impact chart
-function updateTreatmentChart() {
+// Update treatment comparison charts
+function updateTreatmentCharts() {
     const results = assessmentData.results;
-    if (!results || !results.treatment || results.treatment.total === 0) {
-        document.getElementById("treatment-impact-section").style.display = "none";
+    if (!results || !results.treatments) return;
+    
+    // Check if any treatments have data
+    const hasData = results.treatments.treatment1.total > 0 || 
+                    results.treatments.treatment2.total > 0 || 
+                    results.treatments.treatment3.total > 0;
+    
+    const section = document.getElementById("treatment-comparison-section");
+    if (!hasData) {
+        if (section) section.style.display = "none";
         return;
     }
     
-    document.getElementById("treatment-impact-section").style.display = "block";
+    if (section) section.style.display = "block";
     
-    const chartContainer = document.getElementById("treatment-chart-container");
-    if (!chartContainer) return;
-    
-    const vulnerabilityBefore = results.vulnerability.beforeTreatment;
-    const vulnerabilityAfter = results.vulnerability.finalVulnerability;
-    const reduction = vulnerabilityBefore - vulnerabilityAfter;
-    const effectiveness = results.vulnerability.treatmentEffectiveness * 100;
+    const container = document.getElementById("treatment-charts-container");
+    if (!container) return;
     
     let html = `
         <div class="treatment-chart">
-            <div class="chart-bar-container">
-                <div class="chart-label">Before Treatment</div>
-                <div class="chart-bar" style="width: ${Math.min(Math.abs(vulnerabilityBefore) * 10, 100)}%; background: #dc2626;">
-                    ${vulnerabilityBefore.toFixed(1)}
-                </div>
-            </div>
-            <div class="chart-bar-container">
-                <div class="chart-label">After Treatment</div>
-                <div class="chart-bar" style="width: ${Math.min(Math.abs(vulnerabilityAfter) * 10, 100)}%; background: #16a34a;">
-                    ${vulnerabilityAfter.toFixed(1)}
-                </div>
-            </div>
-            <div class="treatment-summary">
-                <p><strong>Vulnerability Reduction:</strong> ${reduction.toFixed(1)} points</p>
-                <p><strong>Treatment Effectiveness:</strong> ${effectiveness.toFixed(1)}% reduction</p>
-            </div>
-        </div>
-        
-        <h5 style="margin-top: 1.5rem;">Component-Level Treatment Effects</h5>
-        <div class="component-scores-grid" style="margin-top: 1rem;">
+            <h5>Vulnerability Comparison</h5>
+            <div class="chart-bars">
     `;
     
-    fireComponents.forEach(fireComp => {
-        const score = results.treatment.byFireComponent[fireComp];
+    const vulns = results.vulnerability;
+    const maxVuln = Math.max(
+        Math.abs(vulns.beforeTreatment),
+        Math.abs(vulns.treatment1),
+        Math.abs(vulns.treatment2),
+        Math.abs(vulns.treatment3)
+    );
+    
+    // Before treatment
+    html += `
+        <div class="chart-bar-container">
+            <div class="chart-label" style="min-width: 180px;">Before Treatment</div>
+            <div class="chart-bar" style="width: ${Math.abs(vulns.beforeTreatment) / maxVuln * 80}%; background: #dc2626;">
+                ${vulns.beforeTreatment.toFixed(1)}
+            </div>
+        </div>
+    `;
+    
+    // Treatment 1
+    if (results.treatments.treatment1.total > 0) {
+        const reduction1 = vulns.beforeTreatment - vulns.treatment1;
         html += `
-            <div class="component-score-item">
-                <h6>${fireComponentNames[fireComp]}</h6>
-                <div class="component-score-value" style="color: #16a34a;">${score}</div>
-                <div class="score-description" style="font-size: 0.8rem;">
-                    ${score === 5 ? 'Excellent' : score === 4 ? 'Very Good' : score === 3 ? 'Good' : score === 2 ? 'Fair' : score === 1 ? 'Poor' : 'No Change'}
+            <div class="chart-bar-container">
+                <div class="chart-label" style="min-width: 180px;">Treatment 1</div>
+                <div class="chart-bar" style="width: ${Math.abs(vulns.treatment1) / maxVuln * 80}%; background: #16a34a;">
+                    ${vulns.treatment1.toFixed(1)} <span style="font-size: 0.85em;">(${reduction1 >= 0 ? '-' : '+'}${Math.abs(reduction1).toFixed(1)})</span>
                 </div>
             </div>
         `;
-    });
+    }
     
-    html += "</div>";
-    chartContainer.innerHTML = html;
+    // Treatment 2
+    if (results.treatments.treatment2.total > 0) {
+        const reduction2 = vulns.beforeTreatment - vulns.treatment2;
+        html += `
+            <div class="chart-bar-container">
+                <div class="chart-label" style="min-width: 180px;">Treatment 2</div>
+                <div class="chart-bar" style="width: ${Math.abs(vulns.treatment2) / maxVuln * 80}%; background: #2563eb;">
+                    ${vulns.treatment2.toFixed(1)} <span style="font-size: 0.85em;">(${reduction2 >= 0 ? '-' : '+'}${Math.abs(reduction2).toFixed(1)})</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Treatment 3
+    if (results.treatments.treatment3.total > 0) {
+        const reduction3 = vulns.beforeTreatment - vulns.treatment3;
+        html += `
+            <div class="chart-bar-container">
+                <div class="chart-label" style="min-width: 180px;">Treatment 3</div>
+                <div class="chart-bar" style="width: ${Math.abs(vulns.treatment3) / maxVuln * 80}%; background: #9333ea;">
+                    ${vulns.treatment3.toFixed(1)} <span style="font-size: 0.85em;">(${reduction3 >= 0 ? '-' : '+'}${Math.abs(reduction3).toFixed(1)})</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
 }
 
 // Update risk level
@@ -764,7 +973,7 @@ function updateRecommendations() {
     const results = assessmentData.results;
     if (!results || !results.vulnerability) return;
     
-    const vulnerability = results.vulnerability.finalVulnerability;
+    const vulnerability = results.finalVulnerability;
     let recommendations = "";
     let findings = [];
     
@@ -779,17 +988,17 @@ function updateRecommendations() {
         findings.push("Several components show concerning response patterns");
         findings.push("Good candidate for preventive treatments");
     } else if (vulnerability >= 1) {
-        recommendations = "Moderate vulnerability suggests monitoring and selective management. Consider preventive treatments and continue regular assessment. Good opportunity for adaptive management.";
+        recommendations = "Moderate vulnerability suggests monitoring and selective management. Consider preventive treatments and continue regular assessment.";
         findings.push("Moderate vulnerability with manageable risk levels");
         findings.push("Some components show sensitivity to fire-climate interactions");
         findings.push("Continue monitoring and consider preventive measures");
     } else if (vulnerability >= -2) {
-        recommendations = "Low vulnerability indicates good resilience. Maintain current management practices and continue monitoring. System appears well-adapted to fire-climate interactions.";
+        recommendations = "Low vulnerability indicates good resilience. Maintain current management practices and continue monitoring.";
         findings.push("Low vulnerability - system shows resilience");
         findings.push("Most components adapt well to expected changes");
         findings.push("Maintain existing management regime");
     } else {
-        recommendations = "Very low vulnerability indicates excellent resilience. System is well-adapted to fire-climate interactions. Continue current management and monitoring protocols.";
+        recommendations = "Very low vulnerability indicates excellent resilience. System well-adapted to fire-climate interactions.";
         findings.push("Excellent resilience to fire-climate interactions");
         findings.push("System well-adapted to expected conditions");
         findings.push("Continue successful management practices");
@@ -843,10 +1052,10 @@ function exportResults() {
         timestamp: new Date().toISOString(),
         siteName: siteName,
         assessor: assessor,
-        fireclimeVersion: "3.1",
+        fireclimeVersion: "3.2",
         results: results,
         methodology: "Southwest FireCLIME Vulnerability Assessment",
-        overallVulnerability: results?.vulnerability?.finalVulnerability || 0,
+        overallVulnerability: results?.finalVulnerability || 0,
         riskLevel: document.getElementById("risk-level-text")?.textContent || "Unknown"
     };
     
