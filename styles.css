@@ -1,4 +1,4 @@
-/* FireCLIME VA Styles - Updated */
+/* FireCLIME VA Styles v3.2 */
 
 * {
     margin: 0;
@@ -89,6 +89,7 @@ body {
     display: block;
 }
 
+/* Hero Section */
 .hero-section {
     text-align: center;
     padding: 3rem 2rem;
@@ -133,6 +134,7 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Buttons */
 .btn {
     display: inline-block;
     padding: 12px 24px;
@@ -164,6 +166,7 @@ body {
     background: #cbd5e0;
 }
 
+/* Module Sections */
 .module-section {
     margin-bottom: 2rem;
 }
@@ -187,6 +190,7 @@ body {
     border-top: none;
 }
 
+/* Forms */
 .form-group {
     margin-bottom: 1.5rem;
 }
@@ -234,6 +238,7 @@ body {
     transition: width 0.3s ease;
 }
 
+/* Results Summary */
 .results-summary {
     background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
     color: white;
@@ -264,7 +269,17 @@ body {
     margin-left: 0.5rem;
 }
 
-/* Info Icon & Tooltip Styles */
+/* Dynamic Text Highlighting */
+.dynamic-text {
+    color: #2563eb;
+    font-weight: 600;
+    background: linear-gradient(120deg, #e0f2fe 0%, #bfdbfe 100%);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #93c5fd;
+}
+
+/* Info Icon & Tooltip */
 .info-icon {
     display: inline-block;
     width: 20px;
@@ -278,6 +293,7 @@ body {
     cursor: help;
     margin-left: 0.5rem;
     transition: all 0.2s ease;
+    font-style: normal;
 }
 
 .info-icon:hover {
@@ -297,10 +313,11 @@ body {
     font-size: 0.9rem;
     line-height: 1.5;
     pointer-events: none;
+    display: none;
 }
 
 .tooltip strong {
-    color: #667eea;
+    color: #93c5fd;
     display: block;
     margin-bottom: 0.5rem;
 }
@@ -370,7 +387,7 @@ body {
     margin-bottom: 0.25rem;
 }
 
-/* Exposure Assessment Styles */
+/* Exposure Assessment */
 .exposure-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -393,13 +410,13 @@ body {
     font-weight: 600;
 }
 
-/* Sensitivity Assessment Styles */
+/* Sensitivity Questions */
 .sensitivity-questions {
     display: grid;
     gap: 1rem;
 }
 
-/* Response Matrix Styles */
+/* Response Matrix */
 .response-matrix {
     margin-top: 1rem;
 }
@@ -452,7 +469,7 @@ body {
     margin-bottom: 0;
 }
 
-/* Treatment Styles */
+/* Treatment Sections */
 .treatment-section {
     background: #f8f9fa;
     padding: 1.5rem;
@@ -472,18 +489,32 @@ body {
     font-size: 1rem;
 }
 
-/* Treatment Chart Styles */
+/* Treatment Charts */
 .treatment-chart {
     background: white;
     padding: 1.5rem;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.treatment-chart h5 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.chart-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .chart-bar-container {
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
+    gap: 1rem;
 }
 
 .chart-label {
@@ -499,21 +530,10 @@ body {
     font-weight: 600;
     text-align: right;
     transition: width 0.3s ease;
+    min-width: 80px;
 }
 
-.treatment-summary {
-    background: #f7fafc;
-    padding: 1rem;
-    border-radius: 6px;
-    margin-top: 1rem;
-}
-
-.treatment-summary p {
-    margin-bottom: 0.5rem;
-    color: #2d3748;
-}
-
-/* Results Styles */
+/* Score Cards */
 .score-card {
     text-align: center;
     padding: 1.5rem;
@@ -553,6 +573,12 @@ body {
     border-radius: 6px;
     border: 1px solid #e2e8f0;
     text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.component-score-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .component-score-item h6 {
@@ -564,7 +590,6 @@ body {
 .component-score-value {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #667eea;
 }
 
 /* Responsive Design */
@@ -620,10 +645,11 @@ body {
     .chart-bar-container {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.5rem;
     }
 
     .chart-label {
-        margin-bottom: 0.5rem;
+        min-width: auto;
     }
 
     .chart-bar {
@@ -693,5 +719,13 @@ body {
 
     .info-icon {
         display: none;
+    }
+
+    .treatment-section {
+        page-break-inside: avoid;
+    }
+
+    .chart-bar-container {
+        page-break-inside: avoid;
     }
 }
