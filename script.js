@@ -517,14 +517,15 @@ function calculateComponentSensitivity(exposureScores) {
         componentScores.byFire[fireComp].fuelStandardized = fuelSum * 0.8334;
         componentScores.byFire[fireComp].totalStandardized = (ecosystemSum + fuelSum) * 0.31223;
     });
-    
+    //dont standardize here-wait until we've summed across all fire components
+    //current code multiplies too early
     // Standardize individual component scores (multiply by 2.5 per rubric)
-    Object.keys(componentScores.byComponent).forEach(comp => {
-        componentScores.byComponent[comp] *= 2.5;
-    });
+//    Object.keys(componentScores.byComponent).forEach(comp => {
+//        componentScores.byComponent[comp] *= 2.5;
+ //   });
     
-    return componentScores;
-}
+    //return componentScores;
+//}
 
 // Calculate Impact
 function calculateImpact(exposureScores, componentSensitivity) {
@@ -533,8 +534,8 @@ function calculateImpact(exposureScores, componentSensitivity) {
         byComponent: {},
         overall: 0
     };
-    
-    // Initialize
+   
+    // Initialize - start fresh for impact calculation
     fireComponents.forEach(fireComp => {
         impactScores.byFire[fireComp] = {
             ecosystem: 0,
@@ -542,61 +543,67 @@ function calculateImpact(exposureScores, componentSensitivity) {
             total: 0
         };
     });
-    
+   
     [...ecosystemComponents, ...fuelComponents].forEach(comp => {
         impactScores.byComponent[comp] = 0;
     });
-    
+   
     // Calculate impact for each fire component
     // CRITICAL: Only calculate impact if exposure = 1
     fireComponents.forEach(fireComp => {
         const exposure = exposureScores[fireComp];
-        
+       
         if (exposure === 1) {
-            impactScores.byFire[fireComp].ecosystem = 
+            // Impact for fire component totals
+            impactScores.byFire[fireComp].ecosystem =
                 exposure * componentSensitivity.byFire[fireComp].ecosystemStandardized;
-            impactScores.byFire[fireComp].fuel = 
+            impactScores.byFire[fireComp].fuel =
                 exposure * componentSensitivity.byFire[fireComp].fuelStandardized;
-            impactScores.byFire[fireComp].total = 
+            impactScores.byFire[fireComp].total =
                 exposure * componentSensitivity.byFire[fireComp].totalStandardized;
-            
-            // Also calculate impact for individual components
+           
+            // Accumulate impact for individual components
+            // These accumulate the RAW sensitivity scores (not yet multiplied by 2.5)
             ecosystemComponents.forEach(ecoComp => {
                 const select = document.getElementById(`response-${fireComp}-${ecoComp}`);
                 if (select && select.value) {
                     let sensitivityScore = 0;
                     if (select.value === "further") sensitivityScore = 1;
                     else if (select.value === "closer") sensitivityScore = -1;
-                    
+                   
+                    // Accumulate: exposure × sensitivity
                     impactScores.byComponent[ecoComp] += exposure * sensitivityScore;
                 }
             });
-            
+           
             fuelComponents.forEach(fuelComp => {
                 const select = document.getElementById(`response-${fireComp}-${fuelComp}`);
                 if (select && select.value) {
                     let sensitivityScore = 0;
                     if (select.value === "further") sensitivityScore = 1;
                     else if (select.value === "closer") sensitivityScore = -1;
-                    
+                   
+                    // Accumulate: exposure × sensitivity
                     impactScores.byComponent[fuelComp] += exposure * sensitivityScore;
                 }
             });
         }
     });
-    
-    // Standardize individual component impacts (multiply by 2.5)
+   
+    // NOW standardize individual component impacts (multiply by 2.5)
+    // This happens ONCE after accumulating across all fire components with exposure = 1
     Object.keys(impactScores.byComponent).forEach(comp => {
         impactScores.byComponent[comp] *= 2.5;
     });
-    
-    // Calculate overall impact
+   
+    // Calculate overall impact (sum of all fire component totals)
     fireComponents.forEach(fireComp => {
         impactScores.overall += impactScores.byFire[fireComp].total;
     });
-    
+   
     return impactScores;
 }
+
 
 // Calculate Treatment Effects (all 3 treatments)
 function calculateTreatmentEffects() {
