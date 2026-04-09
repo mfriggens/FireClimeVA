@@ -601,8 +601,8 @@ function calculateImpact(exposureScores, componentSensitivity) {
         impactScores.overall += impactScores.byFire[fireComp].total;
     });
    
-    return impactScores;
-}
+    return impactScores; //
+} //
 
 
 // Calculate Treatment Effects (all 3 treatments)
