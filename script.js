@@ -600,9 +600,9 @@ function calculateImpact(exposureScores, componentSensitivity) {
     fireComponents.forEach(fireComp => {
         impactScores.overall += impactScores.byFire[fireComp].total;
     });
-   
+
     return impactScores; //
-} //
+} 
 
 
 // Calculate Treatment Effects (all 3 treatments)
