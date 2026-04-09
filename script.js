@@ -524,8 +524,8 @@ function calculateComponentSensitivity(exposureScores) {
 //        componentScores.byComponent[comp] *= 2.5;
  //   });
     
-    //return componentScores;
-//}
+    return componentScores;
+}
 
 // Calculate Impact
 function calculateImpact(exposureScores, componentSensitivity) {
