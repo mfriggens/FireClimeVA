@@ -230,10 +230,11 @@
                         <div class="scoring-guide" style="background: #e8f5e8; padding: 1rem; border-radius: 8px; margin-top: 2rem;">
                             <h4>Exposure Scoring Guide:</h4>
                             <ul style="margin-left: 1.5rem;">
-                                <li><strong>Score = 1:</strong> Fire regime changes AND moves further from DFC</li>
-                                <li><strong>Score = 0:</strong> No change OR change moves closer to DFC</li>
-                                <li><strong>Score = -1:</strong> No fire regime change but conditions move toward DFC</li>
+                                <li><strong>Score = +1:</strong> Moves further from DFC, or changes while maintaining its distance from DFC</li>
+                                <li><strong>Score = 0:</strong> No fire regime change and no change relative to DFC</li>
+                                <li><strong>Score = -1:</strong> Moves closer to DFC</li>
                             </ul>
+                            <p style="margin-top:0.5rem; font-size:0.9rem;">Final exposure = sum of the four components (−4 to +4) × 2.5, giving a −10 to +10 scale. Only components scoring +1 carry forward into impact.</p>
                         </div>
 
                         <div style="margin-top: 2rem;">
@@ -502,8 +503,8 @@
                     <div class="reference-grid">
                         <div class="reference-card">
                             <h5>Exposure Score</h5>
-                            <p><strong>Range:</strong> 0 to 4 (sum across fire regime components)</p>
-                            <p>Measures expected fire regime changes under climate scenario. Each component scored 0, 1, or -1.</p>
+                            <p><strong>Range:</strong> -10 to +10</p>
+                            <p>Measures expected fire regime changes under climate scenario. Each component scored -1, 0, or +1; the sum is multiplied by 2.5.</p>
                         </div>
                         <div class="reference-card">
                             <h5>Intrinsic Sensitivity</h5>
@@ -545,6 +546,14 @@
                             <p style="color: #4a5568; margin-bottom: 1rem;">These scores represent how fire regime changes (due to climate) affect each ecosystem and fuel component (Range: -10 to +10):</p>
                             <div id="component-scores">
                                 <!-- Component scores will be populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- Treatment Impacts by Ecosystem & Fuel Component -->
+                        <div id="treatment-component-section" style="margin-top: 2rem; display: none;">
+                            <h4>Treatment Impacts by Ecosystem &amp; Fuel Component</h4>
+                            <div id="treatment-component-report">
+                                <!-- Populated by JavaScript -->
                             </div>
                         </div>
 

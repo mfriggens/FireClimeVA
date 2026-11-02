@@ -136,7 +136,7 @@ function initializeExposureGrid() {
                         <option value="">Select relationship</option>
                         <option value="further">Further from DFC</option>
                         <option value="closer">Closer to DFC</option>
-                        <option value="within">Within DFC Range</option>
+                        <option value="within">No Change Relative to DFC</option>
                     </select>
                 </div>
             </div>
@@ -376,37 +376,40 @@ function showTab(tabName) {
     updateProgress();
 }
 
+// Exposure lookup: [has fire regime change][relationship to DFC] -> score
+// Based on GTR-395 Table A.1, extended so "closer to DFC" scores -1
+// (allows the summed exposure to be standardized to -10..+10).
+// "within" = no change in distance from DFC (GTR Table 1.3 wording).
+// Edit this table to change the rubric; nothing else needs to change.
+const EXPOSURE_RUBRIC = {
+    change:   { further: 1, within: 1, closer: -1 },
+    noChange: { further: 1, within: 0, closer: -1 }
+};
+
 // Calculate Exposure Scores
 function calculateExposure() {
     const exposureScores = {};
-    
+
     fireComponents.forEach(component => {
         const changeSelect = document.getElementById(`exposure-${component}-change`);
         const directionSelect = document.getElementById(`exposure-${component}-direction`);
         let score = 0;
-        
+
         if (changeSelect && directionSelect && changeSelect.value && directionSelect.value) {
-            const hasChange = changeSelect.value !== "no-change";
-            const direction = directionSelect.value;
-            
-            // Per rubric:
-            // Score = 1: Fire regime changes AND further from DFC
-            // Score = 0: No change OR change moves closer/within DFC
-            // Score = -1: No fire regime change AND moves toward DFC
-            
-            if (hasChange && direction === "further") {
-                score = 1;
-            } else if (!hasChange && (direction === "closer" || direction === "within")) {
-                score = -1;
-            } else {
-                score = 0;
-            }
+            const changeKey = changeSelect.value === "no-change" ? "noChange" : "change";
+            score = EXPOSURE_RUBRIC[changeKey][directionSelect.value] ?? 0;
         }
-        
+
         exposureScores[component] = score;
     });
-    
+
     return exposureScores;
+}
+
+// Standardized exposure: sum of 4 components (-4..+4) x 2.5 -> -10..+10
+function standardizeExposure(exposureScores) {
+    const raw = fireComponents.reduce((sum, c) => sum + (exposureScores[c] || 0), 0);
+    return { raw: raw, standardized: raw * (10 / fireComponents.length) };
 }
 
 // Calculate Intrinsic Sensitivity (13 questions total)
@@ -514,8 +517,8 @@ function calculateComponentSensitivity(exposureScores) {
         
         // Standardize per rubric
         componentScores.byFire[fireComp].ecosystemStandardized = ecosystemSum * 0.5;
-        componentScores.byFire[fireComp].fuelStandardized = fuelSum * 0.8334;
-        componentScores.byFire[fireComp].totalStandardized = (ecosystemSum + fuelSum) * 0.31223;
+        componentScores.byFire[fireComp].fuelStandardized = fuelSum * (10 / 12);
+        componentScores.byFire[fireComp].totalStandardized = (ecosystemSum + fuelSum) * 0.3125; // 10/32
     });
     //dont standardize here-wait until we've summed across all fire components
     //current code multiplies too early
@@ -532,7 +535,10 @@ function calculateImpact(exposureScores, componentSensitivity) {
     const impactScores = {
         byFire: {},
         byComponent: {},
-        overall: 0
+        overall: 0,
+        rawTotal: 0,        // unscaled sum of exposure x response (-32..+32)
+        ecosystemTotal: 0,  // ecosystem impact, -10..+10
+        fuelTotal: 0        // fuel impact, -10..+10
     };
    
     // Initialize - start fresh for impact calculation
@@ -599,6 +605,11 @@ function calculateImpact(exposureScores, componentSensitivity) {
     // Calculate overall impact (sum of all fire component totals)
     fireComponents.forEach(fireComp => {
         impactScores.overall += impactScores.byFire[fireComp].total;
+        impactScores.ecosystemTotal += impactScores.byFire[fireComp].ecosystem;
+        impactScores.fuelTotal += impactScores.byFire[fireComp].fuel;
+        if (exposureScores[fireComp] === 1) {
+            impactScores.rawTotal += componentSensitivity.byFire[fireComp].total;
+        }
     });
 
     return impactScores; //
@@ -659,6 +670,7 @@ function calculateTreatmentEffects() {
 function calculateRisk() {
     // Step 1: Calculate Exposure
     const exposureScores = calculateExposure();
+    const exposureSummary = standardizeExposure(exposureScores);
     
     // Step 2: Calculate Intrinsic Sensitivity
     const intrinsicSensitivity = calculateIntrinsicSensitivity();
@@ -673,7 +685,9 @@ function calculateRisk() {
     const preliminaryImpact = impactScores.overall;
     
     // Step 6: Calculate vulnerability before treatment
-    const vulnerabilityBeforeTreatment = (preliminaryImpact + intrinsicSensitivity.standardizedScore) * 0.22;
+    // GTR-395 App. 2: raw Total Impact (-32..+32) + raw sensitivity count (0..13),
+    // range -32..+45, x 0.222 -> approx -7..+10
+    const vulnerabilityBeforeTreatment = (impactScores.rawTotal + intrinsicSensitivity.rawCount) * 0.222;
     
     // Step 7: Calculate treatment effects
     const treatmentEffects = calculateTreatmentEffects();
@@ -696,6 +710,7 @@ function calculateRisk() {
     // Store results
     assessmentData.results = {
         exposure: exposureScores,
+        exposureSummary: exposureSummary,
         sensitivity: intrinsicSensitivity,
         componentSensitivity: componentSensitivity,
         impact: impactScores,
@@ -712,6 +727,7 @@ function calculateRisk() {
     updateComponentScores();
     updateRecommendations();
     updateTreatmentCharts();
+    updateTreatmentComponentReport();
 }
 
 // Update results display
@@ -733,13 +749,13 @@ function updateResultsDisplay() {
     // Update results grid
     const resultsGrid = document.getElementById("results-grid");
     if (resultsGrid) {
-        const exposureSum = Object.values(results.exposure).reduce((a, b) => a + b, 0);
-        
+        const exp = results.exposureSummary;
+
         resultsGrid.innerHTML = `
             <div class="score-card">
                 <h4>Exposure Score</h4>
-                <div class="score-value" style="color: #dc2626;">${exposureSum}</div>
-                <div class="score-description">Fire regime exposure (0-4 scale)</div>
+                <div class="score-value" style="color: ${exp.standardized > 0 ? '#dc2626' : '#16a34a'};">${exp.standardized.toFixed(1)}</div>
+                <div class="score-description">Fire regime exposure (-10 to +10)<br><span style="font-size:0.8rem;">raw sum: ${exp.raw} of ±4</span></div>
             </div>
             <div class="score-card">
                 <h4>Intrinsic Sensitivity</h4>
@@ -939,6 +955,73 @@ function updateTreatmentCharts() {
         </div>
     `;
     
+    container.innerHTML = html;
+}
+
+// Treatment impacts on each ecosystem and fuel component.
+// Per GTR-395 App. 2: per-component effect reported as percent improvement
+// (rating / max rating); group totals scaled to 0-10 and subtracted from the
+// ecosystem and fuel impact scores (-10..+10).
+function updateTreatmentComponentReport() {
+    const results = assessmentData.results;
+    if (!results || !results.treatments) return;
+
+    const section = document.getElementById("treatment-component-section");
+    const container = document.getElementById("treatment-component-report");
+    if (!section || !container) return;
+
+    const active = [1, 2, 3].filter(i => results.treatments[`treatment${i}`].total > 0);
+    if (active.length === 0) {
+        section.style.display = "none";
+        return;
+    }
+    section.style.display = "block";
+
+    const MAX = 5;
+    const fmt = v => (v > 0 ? "+" : "") + v.toFixed(1);
+    const descr = i => {
+        const d = document.getElementById(`treatment-${i}-description`);
+        return d && d.value.trim() ? d.value.trim() : "";
+    };
+
+    const cell = rating => rating > 0
+        ? `${rating} <span style="color:#6b7280;">(${Math.round(rating / MAX * 100)}%)</span>`
+        : `<span style="color:#9ca3af;">–</span>`;
+
+    const groupRows = (label, comps, names, type, baseline, bg) => {
+        let rows = `<tr style="background:${bg};"><td colspan="${2 + active.length}"><strong>${label}</strong></td></tr>`;
+        comps.forEach(c => {
+            const base = results.impact.byComponent[c];
+            rows += `<tr><td>${names[c]}</td><td style="text-align:center;">${fmt(base)}</td>`;
+            active.forEach(i => { rows += `<td style="text-align:center;">${cell(results.treatments[`treatment${i}`][type][c])}</td>`; });
+            rows += `</tr>`;
+        });
+        // Group total: impact score minus scaled treatment total
+        const maxTotal = comps.length * MAX;
+        rows += `<tr style="font-weight:600; border-top:2px solid #d1d5db;"><td>${label} impact (−10 to +10)</td><td style="text-align:center;">${fmt(baseline)}</td>`;
+        active.forEach(i => {
+            const t = results.treatments[`treatment${i}`];
+            const total = type === "ecosystem" ? t.totalEcosystem : t.totalFuel;
+            const effect = total * (10 / maxTotal);
+            rows += `<td style="text-align:center;">${fmt(baseline - effect)} <span style="font-weight:400; color:#6b7280;">(${Math.round(total / maxTotal * 100)}% of max)</span></td>`;
+        });
+        rows += `</tr>`;
+        return rows;
+    };
+
+    let html = `<div style="overflow-x:auto;"><table class="treatment-component-table" style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <thead><tr style="background:#f3f4f6;">
+            <th style="text-align:left; padding:0.5rem;">Component</th>
+            <th style="padding:0.5rem;">Baseline impact</th>`;
+    active.forEach(i => {
+        html += `<th style="padding:0.5rem;">Treatment ${i}${descr(i) ? `<br><span style="font-weight:400; font-size:0.8rem;">${descr(i).replace(/</g, "&lt;").slice(0, 60)}</span>` : ""}</th>`;
+    });
+    html += `</tr></thead><tbody>`;
+    html += groupRows("Ecosystem", ecosystemComponents, ecosystemComponentNames, "ecosystem", results.impact.ecosystemTotal, "#f0f9ff");
+    html += groupRows("Fuel", fuelComponents, fuelComponentNames, "fuel", results.impact.fuelTotal, "#fef3c7");
+    html += `</tbody></table></div>
+        <p style="font-size:0.8rem; color:#6b7280; margin-top:0.5rem;">Cells show effectiveness rating (1–5) and percent of maximum improvement. "–" = not rated (no or negative effect; not credited). Group rows show the impact score after subtracting the treatment total scaled to 0–10.</p>`;
+
     container.innerHTML = html;
 }
 
