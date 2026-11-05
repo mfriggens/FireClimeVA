@@ -234,7 +234,7 @@
                                 <li><strong>Score = 0:</strong> No fire regime change and no change relative to DFC</li>
                                 <li><strong>Score = -1:</strong> Moves closer to DFC</li>
                             </ul>
-                            <p style="margin-top:0.5rem; font-size:0.9rem;">Final exposure = sum of the four components (−4 to +4) × 2.5, giving a −10 to +10 scale. Only components scoring +1 carry forward into impact.</p>
+                            <p style="margin-top:0.5rem; font-size:0.9rem;">The −1/0/+1 direction is reported for each fire regime component. Exposure itself is 1 (score +1) or 0 (score 0 or −1): only change that moves a component away from DFC is exposure to harm. Final exposure = number of exposed components (0–4) × 2.5, giving a 0 to 10 scale.</p>
                         </div>
 
                         <div style="margin-top: 2rem;">
@@ -315,7 +315,7 @@
 
                             <div class="form-group">
                                 <label class="form-label">10. Is the current fire regime in your ecosystem fuel limited?</label>
-                                <select class="form-input sensitivity-q" id="sensitivity-q10">
+                                <select class="form-input sensitivity-q" id="sensitivity-q10" data-reverse="true">
                                     <option value="">Select answer</option>
                                     <option value="yes">Yes</option>
                                     <option value="no">No</option>
@@ -503,8 +503,8 @@
                     <div class="reference-grid">
                         <div class="reference-card">
                             <h5>Exposure Score</h5>
-                            <p><strong>Range:</strong> -10 to +10</p>
-                            <p>Measures expected fire regime changes under climate scenario. Each component scored -1, 0, or +1; the sum is multiplied by 2.5.</p>
+                            <p><strong>Range:</strong> 0 to 10</p>
+                            <p>Measures harmful fire regime change under the climate scenario. Each component is exposed (1) or not (0); the count is multiplied by 2.5.</p>
                         </div>
                         <div class="reference-card">
                             <h5>Intrinsic Sensitivity</h5>
@@ -553,6 +553,14 @@
                         <div id="treatment-component-section" style="margin-top: 2rem; display: none;">
                             <h4>Treatment Impacts by Ecosystem &amp; Fuel Component</h4>
                             <div id="treatment-component-report">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                        </div>
+
+                        <!-- By Fire Regime Treatment Comparison -->
+                        <div id="treatment-fire-section" style="margin-top: 2rem; display: none;">
+                            <h4>Treatment Comparison by Fire Regime Component</h4>
+                            <div id="treatment-fire-chart">
                                 <!-- Populated by JavaScript -->
                             </div>
                         </div>
