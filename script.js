@@ -738,10 +738,10 @@ function calculateRisk() {
         treatments: treatmentEffects,
         treatmentByFire: calculateTreatmentByFire(impactScores, treatmentEffects),
         vulnerability: vulnerabilities,
-        finalVulnerability: treatmentEffects.treatment1.total > 0 || 
-                           treatmentEffects.treatment2.total > 0 || 
-                           treatmentEffects.treatment3.total > 0 ? 
-                           bestVulnerability : vulnerabilityBeforeTreatment
+        // Headline result is the site's starting condition (before treatment);
+        // treatments are exploratory scenarios reported separately.
+        finalVulnerability: vulnerabilityBeforeTreatment,
+        bestTreatmentVulnerability: bestVulnerability
     };
     
     // Update displays
@@ -751,6 +751,24 @@ function calculateRisk() {
     updateTreatmentCharts();
     updateTreatmentComponentReport();
     updateTreatmentByFireChart();
+    updateFireRegimeSummary();
+}
+
+// Fill "Your original fire regime responses" on the Treatments tab
+function updateFireRegimeSummary() {
+    const el = document.getElementById("treatment-1-fire-summary");
+    const results = assessmentData.results;
+    if (!el || !results) return;
+    const parts = fireComponents.map(c => {
+        const ch = document.getElementById(`exposure-${c}-change`);
+        const dr = document.getElementById(`exposure-${c}-direction`);
+        if (!ch || !dr || !ch.value || !dr.value) return `${fireComponentNames[c]}: not entered`;
+        const chText = ch.options[ch.selectedIndex].text;
+        const drText = dr.options[dr.selectedIndex].text;
+        const tag = results.exposure[c] === 1 ? "exposed" : "not exposed";
+        return `${fireComponentNames[c]}: ${chText}, ${drText} (${tag})`;
+    });
+    el.innerHTML = "<br>" + parts.join("<br>");
 }
 
 // Update results display
@@ -795,11 +813,12 @@ function updateResultsDisplay() {
                 <div class="score-value" style="color: #dc2626;">${results.vulnerability.beforeTreatment.toFixed(1)}</div>
                 <div class="score-description">Vulnerability (-7 to +10)</div>
             </div>
+            ${[1, 2, 3].some(i => results.treatments[`treatment${i}`].total > 0) ? `
             <div class="score-card">
-                <h4>Final Vulnerability</h4>
-                <div class="score-value" style="color: #059669;">${vulnerability.toFixed(1)}</div>
-                <div class="score-description">After best treatment</div>
-            </div>
+                <h4>Best Treatment Scenario</h4>
+                <div class="score-value" style="color: #059669;">${results.bestTreatmentVulnerability.toFixed(1)}</div>
+                <div class="score-description">For comparing treatments only</div>
+            </div>` : ""}
         `;
     }
 }
@@ -1021,7 +1040,7 @@ function updateTreatmentByFireChart() {
         const isNone = v === NO_IMPROVEMENT;
         const left = isNone ? 0 : Math.min(pos(v), zero);
         const width = isNone ? 4 : Math.abs(pos(v) - zero);
-        const txt = isNone ? `${NO_IMPROVEMENT} (no improvement)` : (v > 0 ? "+" : "") + v.toFixed(1);
+        const txt = isNone ? "No improvement" : (v > 0 ? "+" : "") + v.toFixed(1);
         return `<div style="display:flex; align-items:center; margin:2px 0;">
             <div style="min-width:110px; font-size:0.85rem;">${label}</div>
             <div style="position:relative; flex:1; height:18px; background:#f9fafb;">
@@ -1040,7 +1059,7 @@ function updateTreatmentByFireChart() {
         active.forEach(i => { html += bar(`Treatment ${i}`, d[`treatment${i}`], colors[i]); });
         html += `</div>`;
     });
-    html += `<p style="font-size:0.8rem; color:#6b7280;">Bars show each fire regime component's sum stnd impact score before treatment and after subtracting the treatment rating × 2. Longer drops = greater reduction in impact. Axis −20 to +10; unrated components are set to ${NO_IMPROVEMENT} and shown at the left edge. After-treatment values are for comparing treatments only and do not quantify an actual change in impact.</p>`;
+    html += `<p style="font-size:0.8rem; color:#6b7280;">Bars show each fire regime component's sum stnd impact score before treatment and after subtracting the treatment rating × 2. Longer drops = greater reduction in impact. Axis −20 to +10; components the treatment does not improve (left blank) are shown as "No improvement" at the left edge. After-treatment values are for comparing treatments only and do not quantify an actual change in impact.</p>`;
     container.innerHTML = html;
 }
 
@@ -1209,7 +1228,6 @@ function updateProgress() {
         });
         
         const progress = inputs.length > 0 ? Math.round((filled / inputs.length) * 100) : 0;
-        
         const progressElement = document.getElementById(`${section}-progress`);
         const progressBar = document.getElementById(`${section}-bar`);
         
