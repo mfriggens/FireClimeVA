@@ -136,7 +136,7 @@ function initializeExposureGrid() {
                         <option value="">Select relationship</option>
                         <option value="further">Further from DFC</option>
                         <option value="closer">Closer to DFC</option>
-                        <option value="within">Within DFC Range</option>
+                        <option value="within">No Change Relative to DFC</option>
                     </select>
                 </div>
             </div>
@@ -376,37 +376,50 @@ function showTab(tabName) {
     updateProgress();
 }
 
-// Calculate Exposure Scores
-function calculateExposure() {
+// Fire regime DIRECTION lookup: [has change][relationship to DFC] -> -1/0/+1
+// Used only to report whether each fire regime component is moving away from
+// (+1) or toward (-1) DFC. "within" = no change in distance from DFC.
+// Exposure itself (below) is binary: +1 -> 1, otherwise 0 (GTR-395 Table A.1).
+const EXPOSURE_RUBRIC = {
+    change:   { further: 1, within: 1, closer: -1 },
+    noChange: { further: 1, within: 0, closer: -1 }
+};
+
+// Fire regime direction scores (-1/0/+1), for reporting fire regime components
+function calculateExposureDirection() {
     const exposureScores = {};
-    
+
     fireComponents.forEach(component => {
         const changeSelect = document.getElementById(`exposure-${component}-change`);
         const directionSelect = document.getElementById(`exposure-${component}-direction`);
         let score = 0;
-        
+
         if (changeSelect && directionSelect && changeSelect.value && directionSelect.value) {
-            const hasChange = changeSelect.value !== "no-change";
-            const direction = directionSelect.value;
-            
-            // Per rubric:
-            // Score = 1: Fire regime changes AND further from DFC
-            // Score = 0: No change OR change moves closer/within DFC
-            // Score = -1: No fire regime change AND moves toward DFC
-            
-            if (hasChange && direction === "further") {
-                score = 1;
-            } else if (!hasChange && (direction === "closer" || direction === "within")) {
-                score = -1;
-            } else {
-                score = 0;
-            }
+            const changeKey = changeSelect.value === "no-change" ? "noChange" : "change";
+            score = EXPOSURE_RUBRIC[changeKey][directionSelect.value] ?? 0;
         }
-        
+
         exposureScores[component] = score;
     });
-    
+
     return exposureScores;
+}
+
+// Exposure (binary 0/1): only harmful change (direction +1) counts as exposure.
+// This is the multiplier applied to ecosystem and fuel responses in impact;
+// a component moving toward DFC is not exposure, so it contributes 0.
+function calculateExposure(directionScores) {
+    const exposureScores = {};
+    fireComponents.forEach(c => {
+        exposureScores[c] = directionScores[c] === 1 ? 1 : 0;
+    });
+    return exposureScores;
+}
+
+// Final exposure score: count of exposed components (0..4) x 2.5 -> 0..10
+function standardizeExposure(exposureScores) {
+    const raw = fireComponents.reduce((sum, c) => sum + (exposureScores[c] || 0), 0);
+    return { raw: raw, standardized: raw * (10 / fireComponents.length) };
 }
 
 // Calculate Intrinsic Sensitivity (13 questions total)
@@ -430,12 +443,14 @@ function calculateIntrinsicSensitivity() {
         }
     });
     
-    // Questions 6-13 (regular - Yes = sensitivity)
+    // Questions 6-13: Yes = sensitivity, except reverse-scored questions
+    // (data-reverse="true" in index.html; currently Q10, fuel limited), where No = sensitivity
     for (let i = 6; i <= 13; i++) {
         const select = document.getElementById(`sensitivity-q${i}`);
         if (select && select.value) {
             totalQuestions++;
-            if (select.value === "yes") sensitivityCount++;
+            const sensitiveAnswer = select.dataset.reverse === "true" ? "no" : "yes";
+            if (select.value === sensitiveAnswer) sensitivityCount++;
         }
     }
     
@@ -512,10 +527,16 @@ function calculateComponentSensitivity(exposureScores) {
         componentScores.byFire[fireComp].fuel = fuelSum;
         componentScores.byFire[fireComp].total = ecosystemSum + fuelSum;
         
-        // Standardize per rubric
-        componentScores.byFire[fireComp].ecosystemStandardized = ecosystemSum * 0.5;
-        componentScores.byFire[fireComp].fuelStandardized = fuelSum * 0.8334;
-        componentScores.byFire[fireComp].totalStandardized = (ecosystemSum + fuelSum) * 0.31223;
+        // Standardize per Excel tool: each group scaled to -10..+10, then
+        // averaged so ecosystem and fuel are weighted equally
+        //   ecosystem: sum of 5 responses x 2      (-10..+10)
+        //   fuel:      sum of 3 responses x 10/3   (-10..+10)
+        //   "sum stnd impact score" = (eco + fuel) / 2  (-10..+10)
+        const ecoStd = ecosystemSum * (10 / ecosystemComponents.length);
+        const fuelStd = fuelSum * (10 / fuelComponents.length);
+        componentScores.byFire[fireComp].ecosystemStandardized = ecoStd;
+        componentScores.byFire[fireComp].fuelStandardized = fuelStd;
+        componentScores.byFire[fireComp].totalStandardized = (ecoStd + fuelStd) / 2;
     });
     //dont standardize here-wait until we've summed across all fire components
     //current code multiplies too early
@@ -532,7 +553,10 @@ function calculateImpact(exposureScores, componentSensitivity) {
     const impactScores = {
         byFire: {},
         byComponent: {},
-        overall: 0
+        overall: 0,
+        rawResponseTotal: 0, // unscaled sum of exposure x response over all 32 fire x component cells (-32..+32); used for vulnerability
+        ecosystemTotal: 0,   // ecosystem impact, mean of 4 fire components (-10..+10)
+        fuelTotal: 0         // fuel impact, mean of 4 fire components (-10..+10)
     };
    
     // Initialize - start fresh for impact calculation
@@ -596,9 +620,15 @@ function calculateImpact(exposureScores, componentSensitivity) {
         impactScores.byComponent[comp] *= 2.5;
     });
    
-    // Calculate overall impact (sum of all fire component totals)
+    // Overall impact (response) score: sum of the 4 "sum stnd impact scores" / 4.
+    // Non-exposed fire components contribute 0 but still count in the divisor.
+    const nFire = fireComponents.length;
     fireComponents.forEach(fireComp => {
-        impactScores.overall += impactScores.byFire[fireComp].total;
+        impactScores.overall += impactScores.byFire[fireComp].total / nFire;
+        impactScores.ecosystemTotal += impactScores.byFire[fireComp].ecosystem / nFire;
+        impactScores.fuelTotal += impactScores.byFire[fireComp].fuel / nFire;
+        // Vulnerability: raw total impact = sum of exposure (0/1) x response (-1/0/+1)
+        impactScores.rawResponseTotal += exposureScores[fireComp] * componentSensitivity.byFire[fireComp].total;
     });
 
     return impactScores; //
@@ -658,7 +688,9 @@ function calculateTreatmentEffects() {
 // Calculate overall risk/vulnerability
 function calculateRisk() {
     // Step 1: Calculate Exposure
-    const exposureScores = calculateExposure();
+    const exposureDirection = calculateExposureDirection();
+    const exposureScores = calculateExposure(exposureDirection);
+    const exposureSummary = standardizeExposure(exposureScores);
     
     // Step 2: Calculate Intrinsic Sensitivity
     const intrinsicSensitivity = calculateIntrinsicSensitivity();
@@ -673,7 +705,9 @@ function calculateRisk() {
     const preliminaryImpact = impactScores.overall;
     
     // Step 6: Calculate vulnerability before treatment
-    const vulnerabilityBeforeTreatment = (preliminaryImpact + intrinsicSensitivity.standardizedScore) * 0.22;
+    // Raw total impact (sum of exposure x response, -32..+32) + raw sensitivity
+    // count (0..13), range -32..+45, x 0.222 -> approx -7..+10
+    const vulnerabilityBeforeTreatment = (impactScores.rawResponseTotal + intrinsicSensitivity.rawCount) * 0.222;
     
     // Step 7: Calculate treatment effects
     const treatmentEffects = calculateTreatmentEffects();
@@ -696,15 +730,18 @@ function calculateRisk() {
     // Store results
     assessmentData.results = {
         exposure: exposureScores,
+        exposureSummary: exposureSummary,
+        exposureDirection: exposureDirection,
         sensitivity: intrinsicSensitivity,
         componentSensitivity: componentSensitivity,
         impact: impactScores,
         treatments: treatmentEffects,
+        treatmentByFire: calculateTreatmentByFire(impactScores, treatmentEffects),
         vulnerability: vulnerabilities,
-        finalVulnerability: treatmentEffects.treatment1.total > 0 || 
-                           treatmentEffects.treatment2.total > 0 || 
-                           treatmentEffects.treatment3.total > 0 ? 
-                           bestVulnerability : vulnerabilityBeforeTreatment
+        // Headline result is the site's starting condition (before treatment);
+        // treatments are exploratory scenarios reported separately.
+        finalVulnerability: vulnerabilityBeforeTreatment,
+        bestTreatmentVulnerability: bestVulnerability
     };
     
     // Update displays
@@ -712,6 +749,26 @@ function calculateRisk() {
     updateComponentScores();
     updateRecommendations();
     updateTreatmentCharts();
+    updateTreatmentComponentReport();
+    updateTreatmentByFireChart();
+    updateFireRegimeSummary();
+}
+
+// Fill "Your original fire regime responses" on the Treatments tab
+function updateFireRegimeSummary() {
+    const el = document.getElementById("treatment-1-fire-summary");
+    const results = assessmentData.results;
+    if (!el || !results) return;
+    const parts = fireComponents.map(c => {
+        const ch = document.getElementById(`exposure-${c}-change`);
+        const dr = document.getElementById(`exposure-${c}-direction`);
+        if (!ch || !dr || !ch.value || !dr.value) return `${fireComponentNames[c]}: not entered`;
+        const chText = ch.options[ch.selectedIndex].text;
+        const drText = dr.options[dr.selectedIndex].text;
+        const tag = results.exposure[c] === 1 ? "exposed" : "not exposed";
+        return `${fireComponentNames[c]}: ${chText}, ${drText} (${tag})`;
+    });
+    el.innerHTML = "<br>" + parts.join("<br>");
 }
 
 // Update results display
@@ -733,13 +790,13 @@ function updateResultsDisplay() {
     // Update results grid
     const resultsGrid = document.getElementById("results-grid");
     if (resultsGrid) {
-        const exposureSum = Object.values(results.exposure).reduce((a, b) => a + b, 0);
-        
+        const exp = results.exposureSummary;
+
         resultsGrid.innerHTML = `
             <div class="score-card">
                 <h4>Exposure Score</h4>
-                <div class="score-value" style="color: #dc2626;">${exposureSum}</div>
-                <div class="score-description">Fire regime exposure (0-4 scale)</div>
+                <div class="score-value" style="color: ${exp.standardized > 0 ? '#dc2626' : '#16a34a'};">${exp.standardized.toFixed(1)}</div>
+                <div class="score-description">Fire regime exposure (0 to 10)<br><span style="font-size:0.8rem;">${exp.raw} of 4 components exposed</span></div>
             </div>
             <div class="score-card">
                 <h4>Intrinsic Sensitivity</h4>
@@ -756,11 +813,12 @@ function updateResultsDisplay() {
                 <div class="score-value" style="color: #dc2626;">${results.vulnerability.beforeTreatment.toFixed(1)}</div>
                 <div class="score-description">Vulnerability (-7 to +10)</div>
             </div>
+            ${[1, 2, 3].some(i => results.treatments[`treatment${i}`].total > 0) ? `
             <div class="score-card">
-                <h4>Final Vulnerability</h4>
-                <div class="score-value" style="color: #059669;">${vulnerability.toFixed(1)}</div>
-                <div class="score-description">After best treatment</div>
-            </div>
+                <h4>Best Treatment Scenario</h4>
+                <div class="score-value" style="color: #059669;">${results.bestTreatmentVulnerability.toFixed(1)}</div>
+                <div class="score-description">For comparing treatments only</div>
+            </div>` : ""}
         `;
     }
 }
@@ -786,7 +844,7 @@ function updateComponentScores() {
                         <div class="component-score-value" style="color: ${impact.total >= 0 ? '#dc2626' : '#16a34a'}">
                             ${impact.total.toFixed(1)}
                         </div>
-                        <div class="score-description" style="font-size: 0.8rem;">Climate impact on fire</div>
+                        <div class="score-description" style="font-size: 0.8rem;">Exposed: moving further from DFC (+1)</div>
                     </div>
                 `;
             } else {
@@ -794,7 +852,7 @@ function updateComponentScores() {
                     <div class="component-score-item" style="opacity: 0.6;">
                         <h6>${fireComponentNames[fireComp]}</h6>
                         <div class="component-score-value" style="color: #6b7280;">-</div>
-                        <div class="score-description" style="font-size: 0.8rem;">No exposure calculated<br>(no impact indicated)</div>
+                        <div class="score-description" style="font-size: 0.8rem;">${results.exposureDirection[fireComp] === -1 ? 'Moving closer to DFC (−1)' : 'No change relative to DFC (0)'}<br>Not exposed; no impact calculated</div>
                     </div>
                 `;
             }
@@ -942,6 +1000,136 @@ function updateTreatmentCharts() {
     container.innerHTML = html;
 }
 
+// By-fire-regime treatment comparison.
+// For each fire regime component: sum stnd impact score minus (rating x 2),
+// so a 1-5 rating matches the -10..+10 component scale. A blank rating
+// (no or negative effect) is set to NO_IMPROVEMENT so it drops to the bottom
+// of the chart. Values are for relative comparison among treatments only.
+const NO_IMPROVEMENT = -25;
+function calculateTreatmentByFire(impactScores, treatments) {
+    const out = {};
+    fireComponents.forEach(f => {
+        const baseline = impactScores.byFire[f].total;
+        out[f] = { baseline: baseline };
+        [1, 2, 3].forEach(i => {
+            const t = treatments[`treatment${i}`];
+            if (t.total === 0) { out[f][`treatment${i}`] = null; return; } // treatment not used
+            const rating = t.fire[f];
+            out[f][`treatment${i}`] = rating > 0 ? baseline - rating * 2 : NO_IMPROVEMENT;
+        });
+    });
+    return out;
+}
+
+function updateTreatmentByFireChart() {
+    const results = assessmentData.results;
+    const section = document.getElementById("treatment-fire-section");
+    const container = document.getElementById("treatment-fire-chart");
+    if (!results || !results.treatmentByFire || !section || !container) return;
+
+    const active = [1, 2, 3].filter(i => results.treatments[`treatment${i}`].total > 0);
+    if (active.length === 0) { section.style.display = "none"; return; }
+    section.style.display = "block";
+
+    const colors = { baseline: "#dc2626", 1: "#16a34a", 2: "#2563eb", 3: "#9333ea" };
+    // Axis: -20..+10 so all real values fit; NO_IMPROVEMENT is pinned to the left edge
+    const AX_MIN = -20, AX_MAX = 10, span = AX_MAX - AX_MIN;
+    const pos = v => ((Math.max(v, AX_MIN) - AX_MIN) / span) * 100;
+    const zero = pos(0);
+    const bar = (label, v, color) => {
+        const isNone = v === NO_IMPROVEMENT;
+        const left = isNone ? 0 : Math.min(pos(v), zero);
+        const width = isNone ? 4 : Math.abs(pos(v) - zero);
+        const txt = isNone ? "No improvement" : (v > 0 ? "+" : "") + v.toFixed(1);
+        return `<div style="display:flex; align-items:center; margin:2px 0;">
+            <div style="min-width:110px; font-size:0.85rem;">${label}</div>
+            <div style="position:relative; flex:1; height:18px; background:#f9fafb;">
+                <div style="position:absolute; left:${zero}%; top:0; bottom:0; border-left:1px solid #9ca3af;"></div>
+                <div style="position:absolute; left:${left}%; width:${width}%; top:2px; bottom:2px; background:${isNone ? "repeating-linear-gradient(45deg,#d1d5db 0 4px,#f3f4f6 4px 8px)" : color};"></div>
+            </div>
+            <div style="min-width:150px; font-size:0.85rem; padding-left:0.5rem; color:${isNone ? "#6b7280" : "inherit"};">${txt}</div>
+        </div>`;
+    };
+
+    let html = "";
+    fireComponents.forEach(f => {
+        const d = results.treatmentByFire[f];
+        html += `<div class="treatment-chart" style="margin-bottom:1rem;"><h5>${fireComponentNames[f]}</h5>`;
+        html += bar("Before treatment", d.baseline, colors.baseline);
+        active.forEach(i => { html += bar(`Treatment ${i}`, d[`treatment${i}`], colors[i]); });
+        html += `</div>`;
+    });
+    html += `<p style="font-size:0.8rem; color:#6b7280;">Bars show each fire regime component's sum stnd impact score before treatment and after subtracting the treatment rating × 2. Longer drops = greater reduction in impact. Axis −20 to +10; components the treatment does not improve (left blank) are shown as "No improvement" at the left edge. After-treatment values are for comparing treatments only and do not quantify an actual change in impact.</p>`;
+    container.innerHTML = html;
+}
+
+// Treatment impacts on each ecosystem and fuel component.
+// Per GTR-395 App. 2: per-component effect reported as percent improvement
+// (rating / max rating); group totals scaled to 0-10 and subtracted from the
+// ecosystem and fuel impact scores (-10..+10).
+function updateTreatmentComponentReport() {
+    const results = assessmentData.results;
+    if (!results || !results.treatments) return;
+
+    const section = document.getElementById("treatment-component-section");
+    const container = document.getElementById("treatment-component-report");
+    if (!section || !container) return;
+
+    const active = [1, 2, 3].filter(i => results.treatments[`treatment${i}`].total > 0);
+    if (active.length === 0) {
+        section.style.display = "none";
+        return;
+    }
+    section.style.display = "block";
+
+    const MAX = 5;
+    const fmt = v => (v > 0 ? "+" : "") + v.toFixed(1);
+    const descr = i => {
+        const d = document.getElementById(`treatment-${i}-description`);
+        return d && d.value.trim() ? d.value.trim() : "";
+    };
+
+    const cell = rating => rating > 0
+        ? `${rating} <span style="color:#6b7280;">(${Math.round(rating / MAX * 100)}%)</span>`
+        : `<span style="color:#9ca3af;">–</span>`;
+
+    const groupRows = (label, comps, names, type, baseline, bg) => {
+        let rows = `<tr style="background:${bg};"><td colspan="${2 + active.length}"><strong>${label}</strong></td></tr>`;
+        comps.forEach(c => {
+            const base = results.impact.byComponent[c];
+            rows += `<tr><td>${names[c]}</td><td style="text-align:center;">${fmt(base)}</td>`;
+            active.forEach(i => { rows += `<td style="text-align:center;">${cell(results.treatments[`treatment${i}`][type][c])}</td>`; });
+            rows += `</tr>`;
+        });
+        // Group total: impact score minus scaled treatment total
+        const maxTotal = comps.length * MAX;
+        rows += `<tr style="font-weight:600; border-top:2px solid #d1d5db;"><td>${label} impact (−10 to +10)</td><td style="text-align:center;">${fmt(baseline)}</td>`;
+        active.forEach(i => {
+            const t = results.treatments[`treatment${i}`];
+            const total = type === "ecosystem" ? t.totalEcosystem : t.totalFuel;
+            const effect = total * (10 / maxTotal);
+            rows += `<td style="text-align:center;">${fmt(baseline - effect)} <span style="font-weight:400; color:#6b7280;">(${Math.round(total / maxTotal * 100)}% of max)</span></td>`;
+        });
+        rows += `</tr>`;
+        return rows;
+    };
+
+    let html = `<div style="overflow-x:auto;"><table class="treatment-component-table" style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <thead><tr style="background:#f3f4f6;">
+            <th style="text-align:left; padding:0.5rem;">Component</th>
+            <th style="padding:0.5rem;">Baseline impact</th>`;
+    active.forEach(i => {
+        html += `<th style="padding:0.5rem;">Treatment ${i}${descr(i) ? `<br><span style="font-weight:400; font-size:0.8rem;">${descr(i).replace(/</g, "&lt;").slice(0, 60)}</span>` : ""}</th>`;
+    });
+    html += `</tr></thead><tbody>`;
+    html += groupRows("Ecosystem", ecosystemComponents, ecosystemComponentNames, "ecosystem", results.impact.ecosystemTotal, "#f0f9ff");
+    html += groupRows("Fuel", fuelComponents, fuelComponentNames, "fuel", results.impact.fuelTotal, "#fef3c7");
+    html += `</tbody></table></div>
+        <p style="font-size:0.8rem; color:#6b7280; margin-top:0.5rem;">Cells show effectiveness rating (1–5) and percent of maximum improvement. "–" = not rated (no or negative effect; not credited). Group rows show the impact score after subtracting the treatment total scaled to 0–10; these are for comparing treatments only and do not quantify an actual change in impact.</p>`;
+
+    container.innerHTML = html;
+}
+
 // Update risk level
 function updateRiskLevel(vulnerability) {
     let riskLevel = "";
@@ -1040,7 +1228,6 @@ function updateProgress() {
         });
         
         const progress = inputs.length > 0 ? Math.round((filled / inputs.length) * 100) : 0;
-        
         const progressElement = document.getElementById(`${section}-progress`);
         const progressBar = document.getElementById(`${section}-bar`);
         

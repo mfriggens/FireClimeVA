@@ -729,3 +729,10 @@ body {
         page-break-inside: avoid;
     }
 }
+
+/* Treatment impacts by component table */
+.treatment-component-table td,
+.treatment-component-table th {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
