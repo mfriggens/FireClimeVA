@@ -18,7 +18,7 @@ let assessmentData = {
 const fireComponents = ["size", "frequency", "severity", "area"];
 const fireComponentNames = {
     size: "High Severity Patch Size",
-    frequency: "Fire Frequency", 
+    frequency: "Fire Frequency",
     severity: "Soil Burn Severity",
     area: "Annual Area Burned"
 };
@@ -44,15 +44,15 @@ const fuelComponentNames = {
 // Tooltip content
 const tooltipContent = {
     "climate-vars": `<strong>Climate Variables:</strong><br>The VA tool includes climate components that are (1) identified as important in Southwestern climate-fire interactions, (2) have sufficient data in scientific literature, and (3) are relevant to fire management. These significantly impact wildfire regimes in complex ways.`,
-    
+
     "fire-size": `<strong>High Severity Patch Size:</strong><br>The spatial extent of high severity burn patches affects post-fire recovery, erosion potential, and ecosystem structure. Large patches may exceed regeneration thresholds for some species. Distance from unburned forest edge greatly limits regeneration after high-severity fire.`,
-    
+
     "fire-frequency": `<strong>Fire Frequency:</strong><br>The number of fire events per unit time heavily influences which plant species or functional groups dominate. If fire is too frequent or infrequent to allow a species to complete its life cycle, that species will be excluded from the system.`,
-    
+
     "fire-severity": `<strong>Soil Burn Severity:</strong><br>The degree to which soil is altered by fire affects soil structure, nutrient availability, and erosion potential. High severity burns can sterilize soil, create hydrophobic conditions, and reduce water infiltration.`,
-    
+
     "fire-area": `<strong>Annual Area Burned:</strong><br>Strongly regulated by fire-year and antecedent conditions, particularly drought and seasonal precipitation. Area burned is sensitive to climate drivers because combinations of prior-season precipitation and current drought promote fire spread over large areas.`,
-    
+
     "ecosystem-components": `<strong>Ecosystem & Fuel Components:</strong><br>Evaluate how changes in fire regimes affect key ecosystem processes (survivorship, recruitment, composition, structure, erosion) and fuel characteristics (loading, horizontal continuity, vertical arrangement). Select whether expected changes move components further from, closer to, or maintain distance from Desired Future Conditions.`
 };
 
@@ -66,7 +66,72 @@ document.addEventListener("DOMContentLoaded", function() {
     setDefaultDate();
     updateFireDepartureSummary();
     calculateRisk();
+    loadPresetFromUrl();
 });
+
+// ---- Save / load assessments ----
+// Every input on the form has class "form-input" and an id; saving stores
+// {id: value} so a saved file can be loaded back into the tool.
+function collectInputs() {
+    const inputs = {};
+    document.querySelectorAll(".form-input[id]").forEach(el => { inputs[el.id] = el.value; });
+    return inputs;
+}
+
+function applyInputs(inputs) {
+    if (!inputs || typeof inputs !== "object") throw new Error("File has no saved inputs.");
+    let n = 0;
+    Object.entries(inputs).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el && el.classList.contains("form-input")) { el.value = value; n++; }
+    });
+    updateFireDepartureSummary();
+    updateFireRegimeChangeText();
+    updateProgress();
+    calculateRisk();
+    return n;
+}
+
+function showLoadNotice(message, isError) {
+    const el = document.getElementById("load-notice");
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = "block";
+    el.style.background = isError ? "#fee2e2" : "#e8f5e8";
+}
+
+// Load a file saved with "Save Assessment"
+function loadAssessmentFile(fileInput) {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const data = JSON.parse(reader.result);
+            if (!data.inputs) throw new Error("This file has results only (saved by an older version) and cannot be reloaded.");
+            applyInputs(data.inputs);
+            showLoadNotice(`Loaded "${data.siteName || file.name}"${data.timestamp ? ` (saved ${data.timestamp.split("T")[0]})` : ""}.`);
+        } catch (err) {
+            showLoadNotice(`Could not load ${file.name}: ${err.message}`, true);
+        }
+        fileInput.value = "";
+    };
+    reader.readAsText(file);
+}
+
+// Workshop presets: index.html?preset=NAME loads presets/NAME.json
+function loadPresetFromUrl() {
+    const name = new URLSearchParams(window.location.search).get("preset");
+    if (!name) return;
+    if (!/^[\w-]+$/.test(name)) { showLoadNotice(`Invalid preset name "${name}".`, true); return; }
+    fetch(`presets/${name}.json`)
+        .then(r => { if (!r.ok) throw new Error(`presets/${name}.json not found`); return r.json(); })
+        .then(data => {
+            applyInputs(data.inputs);
+            showLoadNotice(data.presetNote || `Workshop example "${name}" loaded. Changes are not saved unless you use Save Assessment.`);
+        })
+        .catch(err => showLoadNotice(`Could not load preset: ${err.message}`, true));
+}
 
 // Setup tooltip system
 function setupTooltips() {
@@ -75,7 +140,7 @@ function setupTooltips() {
             const tooltipKey = e.target.dataset.tooltip;
             const content = tooltipContent[tooltipKey];
             const tooltip = document.getElementById('tooltip-container');
-            
+
             if (content && tooltip) {
                 tooltip.innerHTML = content;
                 tooltip.style.display = 'block';
@@ -83,14 +148,14 @@ function setupTooltips() {
             }
         }
     });
-    
+
     document.addEventListener('mouseout', function(e) {
         if (e.target.classList.contains('info-icon')) {
             const tooltip = document.getElementById('tooltip-container');
             if (tooltip) tooltip.style.display = 'none';
         }
     });
-    
+
     document.addEventListener('mousemove', function(e) {
         if (e.target.classList.contains('info-icon')) {
             const tooltip = document.getElementById('tooltip-container');
@@ -112,13 +177,13 @@ function positionTooltip(e, tooltip) {
 function initializeExposureGrid() {
     const container = document.getElementById("exposure-container");
     if (!container) return;
-    
+
     let html = "";
     fireComponents.forEach(fireComp => {
         html += `
             <div class="exposure-component">
                 <h5>
-                    ${fireComponentNames[fireComp]} 
+                    ${fireComponentNames[fireComp]}
                     <span class="info-icon" data-tooltip="fire-${fireComp}">ℹ️</span>
                 </h5>
                 <div class="form-group">
@@ -149,9 +214,9 @@ function initializeExposureGrid() {
 function initializeResponseMatrix() {
     const matrixContainer = document.getElementById("response-matrix");
     if (!matrixContainer) return;
-    
+
     let matrixHTML = "";
-    
+
     fireComponents.forEach(fireComp => {
         matrixHTML += `
             <div class="fire-component-section">
@@ -162,7 +227,7 @@ function initializeResponseMatrix() {
                     <div class="component-group">
                         <h6>Ecosystem Components</h6>
         `;
-        
+
         ecosystemComponents.forEach(ecoComp => {
             matrixHTML += `
                 <div class="component-item">
@@ -176,13 +241,13 @@ function initializeResponseMatrix() {
                 </div>
             `;
         });
-        
+
         matrixHTML += `
                     </div>
                     <div class="component-group">
                         <h6>Fuel Components</h6>
         `;
-        
+
         fuelComponents.forEach(fuelComp => {
             matrixHTML += `
                 <div class="component-item">
@@ -196,14 +261,14 @@ function initializeResponseMatrix() {
                 </div>
             `;
         });
-        
+
         matrixHTML += `
                     </div>
                 </div>
             </div>
         `;
     });
-    
+
     matrixContainer.innerHTML = matrixHTML;
 }
 
@@ -230,7 +295,7 @@ function initializeTreatmentSections() {
         });
         const fireContainer = document.getElementById(`treatment-${i}-fire-components`);
         if (fireContainer) fireContainer.innerHTML = fireHTML;
-        
+
         // Fuel components
         let fuelHTML = "";
         fuelComponents.forEach(comp => {
@@ -251,7 +316,7 @@ function initializeTreatmentSections() {
         });
         const fuelContainer = document.getElementById(`treatment-${i}-fuel-components`);
         if (fuelContainer) fuelContainer.innerHTML = fuelHTML;
-        
+
         // Ecosystem components
         let ecoHTML = "";
         ecosystemComponents.forEach(comp => {
@@ -279,7 +344,7 @@ function initializeTreatmentSections() {
 function updateFireDepartureSummary() {
     const summary = document.getElementById("fire-departure-summary");
     if (!summary) return;
-    
+
     const departures = [];
     fireComponents.forEach(comp => {
         const select = document.getElementById(`departure-${comp}`);
@@ -287,7 +352,7 @@ function updateFireDepartureSummary() {
             departures.push(fireComponentNames[comp]);
         }
     });
-    
+
     if (departures.length > 0) {
         summary.textContent = `Currently departed: ${departures.join(", ")}`;
     } else {
@@ -300,15 +365,15 @@ function updateFireRegimeChangeText() {
     fireComponents.forEach(comp => {
         const changeSelect = document.getElementById(`exposure-${comp}-change`);
         const textElement = document.getElementById(`fire-change-${comp}`);
-        
+
         if (changeSelect && textElement) {
             const changeValue = changeSelect.value;
             let changeText = "Changes in";
-            
+
             if (changeValue === "increase") changeText = "Increase in";
             else if (changeValue === "decrease") changeText = "Decrease in";
             else if (changeValue === "no-change") changeText = "No Change in";
-            
+
             textElement.textContent = changeText;
         }
     });
@@ -319,17 +384,17 @@ function setupEventListeners() {
     document.addEventListener("change", function(e) {
         if (e.target.classList.contains("form-input")) {
             updateProgress();
-            
+
             // Update fire departure summary when departure questions change
             if (e.target.classList.contains("fire-departure-q")) {
                 updateFireDepartureSummary();
             }
-            
+
             // Update dynamic text when exposure changes
             if (e.target.id && e.target.id.includes("exposure-")) {
                 updateFireRegimeChangeText();
             }
-            
+
             calculateRisk();
         }
     });
@@ -348,31 +413,31 @@ function showTab(tabName) {
     document.querySelectorAll(".tab-panel").forEach(panel => {
         panel.classList.remove("active");
     });
-    
+
     document.querySelectorAll(".nav-tab").forEach(tab => {
         tab.classList.remove("active");
     });
-    
+
     const targetPanel = document.getElementById(tabName);
     if (targetPanel) {
         targetPanel.classList.add("active");
     }
-    
+
     const tabs = document.querySelectorAll(".nav-tab");
     const tabIndex = {
         "overview": 0,
-        "scenario": 1, 
+        "scenario": 1,
         "exposure": 2,
         "sensitivity": 3,
         "baseline": 4,
         "treatments": 5,
         "results": 6
     };
-    
+
     if (tabs[tabIndex[tabName]]) {
         tabs[tabIndex[tabName]].classList.add("active");
     }
-    
+
     updateProgress();
 }
 
@@ -426,14 +491,14 @@ function standardizeExposure(exposureScores) {
 function calculateIntrinsicSensitivity() {
     let sensitivityCount = 0;
     let totalQuestions = 0;
-    
+
     // Question 1 (reversed - No = sensitivity)
     const q1 = document.getElementById("sensitivity-q1");
     if (q1 && q1.value) {
         totalQuestions++;
         if (q1.value === "no") sensitivityCount++;
     }
-    
+
     // Questions 2-5: Fire regime departure questions from scenario building
     fireComponents.forEach(comp => {
         const select = document.getElementById(`departure-${comp}`);
@@ -442,7 +507,7 @@ function calculateIntrinsicSensitivity() {
             if (select.value === "yes") sensitivityCount++;
         }
     });
-    
+
     // Questions 6-13: Yes = sensitivity, except reverse-scored questions
     // (data-reverse="true" in index.html; currently Q10, fuel limited), where No = sensitivity
     for (let i = 6; i <= 13; i++) {
@@ -453,11 +518,11 @@ function calculateIntrinsicSensitivity() {
             if (select.value === sensitiveAnswer) sensitivityCount++;
         }
     }
-    
+
     // Calculate proportion and standardize to 0-10 scale
     const proportion = totalQuestions > 0 ? sensitivityCount / totalQuestions : 0;
     const standardizedScore = proportion * 10;
-    
+
     return {
         rawCount: sensitivityCount,
         totalQuestions: totalQuestions,
@@ -474,7 +539,7 @@ function calculateComponentSensitivity(exposureScores) {
         ecosystem: {},
         fuel: {}
     };
-    
+
     // Initialize scores
     fireComponents.forEach(fireComp => {
         componentScores.byFire[fireComp] = {
@@ -486,16 +551,16 @@ function calculateComponentSensitivity(exposureScores) {
             totalStandardized: 0
         };
     });
-    
+
     [...ecosystemComponents, ...fuelComponents].forEach(comp => {
         componentScores.byComponent[comp] = 0;
     });
-    
+
     // Calculate scores for each fire component
     fireComponents.forEach(fireComp => {
         let ecosystemSum = 0;
         let fuelSum = 0;
-        
+
         // Ecosystem components
         ecosystemComponents.forEach(ecoComp => {
             const select = document.getElementById(`response-${fireComp}-${ecoComp}`);
@@ -503,12 +568,12 @@ function calculateComponentSensitivity(exposureScores) {
                 let score = 0;
                 if (select.value === "further") score = 1;
                 else if (select.value === "closer") score = -1;
-                
+
                 ecosystemSum += score;
                 componentScores.byComponent[ecoComp] = (componentScores.byComponent[ecoComp] || 0) + score;
             }
         });
-        
+
         // Fuel components
         fuelComponents.forEach(fuelComp => {
             const select = document.getElementById(`response-${fireComp}-${fuelComp}`);
@@ -516,17 +581,17 @@ function calculateComponentSensitivity(exposureScores) {
                 let score = 0;
                 if (select.value === "further") score = 1;
                 else if (select.value === "closer") score = -1;
-                
+
                 fuelSum += score;
                 componentScores.byComponent[fuelComp] = (componentScores.byComponent[fuelComp] || 0) + score;
             }
         });
-        
+
         // Store raw sums
         componentScores.byFire[fireComp].ecosystem = ecosystemSum;
         componentScores.byFire[fireComp].fuel = fuelSum;
         componentScores.byFire[fireComp].total = ecosystemSum + fuelSum;
-        
+
         // Standardize per Excel tool: each group scaled to -10..+10, then
         // averaged so ecosystem and fuel are weighted equally
         //   ecosystem: sum of 5 responses x 2      (-10..+10)
@@ -544,7 +609,7 @@ function calculateComponentSensitivity(exposureScores) {
 //    Object.keys(componentScores.byComponent).forEach(comp => {
 //        componentScores.byComponent[comp] *= 2.5;
  //   });
-    
+
     return componentScores;
 }
 
@@ -558,7 +623,7 @@ function calculateImpact(exposureScores, componentSensitivity) {
         ecosystemTotal: 0,   // ecosystem impact, mean of 4 fire components (-10..+10)
         fuelTotal: 0         // fuel impact, mean of 4 fire components (-10..+10)
     };
-   
+
     // Initialize - start fresh for impact calculation
     fireComponents.forEach(fireComp => {
         impactScores.byFire[fireComp] = {
@@ -567,16 +632,16 @@ function calculateImpact(exposureScores, componentSensitivity) {
             total: 0
         };
     });
-   
+
     [...ecosystemComponents, ...fuelComponents].forEach(comp => {
         impactScores.byComponent[comp] = 0;
     });
-   
+
     // Calculate impact for each fire component
     // CRITICAL: Only calculate impact if exposure = 1
     fireComponents.forEach(fireComp => {
         const exposure = exposureScores[fireComp];
-       
+
         if (exposure === 1) {
             // Impact for fire component totals
             impactScores.byFire[fireComp].ecosystem =
@@ -585,7 +650,7 @@ function calculateImpact(exposureScores, componentSensitivity) {
                 exposure * componentSensitivity.byFire[fireComp].fuelStandardized;
             impactScores.byFire[fireComp].total =
                 exposure * componentSensitivity.byFire[fireComp].totalStandardized;
-           
+
             // Accumulate impact for individual components
             // These accumulate the RAW sensitivity scores (not yet multiplied by 2.5)
             ecosystemComponents.forEach(ecoComp => {
@@ -594,32 +659,32 @@ function calculateImpact(exposureScores, componentSensitivity) {
                     let sensitivityScore = 0;
                     if (select.value === "further") sensitivityScore = 1;
                     else if (select.value === "closer") sensitivityScore = -1;
-                   
+
                     // Accumulate: exposure × sensitivity
                     impactScores.byComponent[ecoComp] += exposure * sensitivityScore;
                 }
             });
-           
+
             fuelComponents.forEach(fuelComp => {
                 const select = document.getElementById(`response-${fireComp}-${fuelComp}`);
                 if (select && select.value) {
                     let sensitivityScore = 0;
                     if (select.value === "further") sensitivityScore = 1;
                     else if (select.value === "closer") sensitivityScore = -1;
-                   
+
                     // Accumulate: exposure × sensitivity
                     impactScores.byComponent[fuelComp] += exposure * sensitivityScore;
                 }
             });
         }
     });
-   
+
     // NOW standardize individual component impacts (multiply by 2.5)
     // This happens ONCE after accumulating across all fire components with exposure = 1
     Object.keys(impactScores.byComponent).forEach(comp => {
         impactScores.byComponent[comp] *= 2.5;
     });
-   
+
     // Overall impact (response) score: sum of the 4 "sum stnd impact scores" / 4.
     // Non-exposed fire components contribute 0 but still count in the divisor.
     const nFire = fireComponents.length;
@@ -632,13 +697,13 @@ function calculateImpact(exposureScores, componentSensitivity) {
     });
 
     return impactScores; //
-} 
+}
 
 
 // Calculate Treatment Effects (all 3 treatments)
 function calculateTreatmentEffects() {
     const treatments = {};
-    
+
     for (let i = 1; i <= 3; i++) {
         const treatmentScores = {
             fire: {},
@@ -650,7 +715,7 @@ function calculateTreatmentEffects() {
             total: 0,
             standardizedTotal: 0
         };
-        
+
         // Fire components
         fireComponents.forEach(comp => {
             const select = document.getElementById(`treatment-${i}-fire-${comp}`);
@@ -658,7 +723,7 @@ function calculateTreatmentEffects() {
             treatmentScores.fire[comp] = score;
             treatmentScores.totalFire += score;
         });
-        
+
         // Fuel components
         fuelComponents.forEach(comp => {
             const select = document.getElementById(`treatment-${i}-fuel-${comp}`);
@@ -666,7 +731,7 @@ function calculateTreatmentEffects() {
             treatmentScores.fuel[comp] = score;
             treatmentScores.totalFuel += score;
         });
-        
+
         // Ecosystem components
         ecosystemComponents.forEach(comp => {
             const select = document.getElementById(`treatment-${i}-ecosystem-${comp}`);
@@ -674,14 +739,14 @@ function calculateTreatmentEffects() {
             treatmentScores.ecosystem[comp] = score;
             treatmentScores.totalEcosystem += score;
         });
-        
+
         // Total and standardized
         treatmentScores.total = treatmentScores.totalFire + treatmentScores.totalFuel + treatmentScores.totalEcosystem;
         treatmentScores.standardizedTotal = (treatmentScores.totalEcosystem + treatmentScores.totalFuel) * 0.25;
-        
+
         treatments[`treatment${i}`] = treatmentScores;
     }
-    
+
     return treatments;
 }
 
@@ -691,27 +756,27 @@ function calculateRisk() {
     const exposureDirection = calculateExposureDirection();
     const exposureScores = calculateExposure(exposureDirection);
     const exposureSummary = standardizeExposure(exposureScores);
-    
+
     // Step 2: Calculate Intrinsic Sensitivity
     const intrinsicSensitivity = calculateIntrinsicSensitivity();
-    
+
     // Step 3: Calculate Component Sensitivity
     const componentSensitivity = calculateComponentSensitivity(exposureScores);
-    
+
     // Step 4: Calculate Impact
     const impactScores = calculateImpact(exposureScores, componentSensitivity);
-    
+
     // Step 5: Calculate preliminary impact score
     const preliminaryImpact = impactScores.overall;
-    
+
     // Step 6: Calculate vulnerability before treatment
     // Raw total impact (sum of exposure x response, -32..+32) + raw sensitivity
     // count (0..13), range -32..+45, x 0.222 -> approx -7..+10
     const vulnerabilityBeforeTreatment = (impactScores.rawResponseTotal + intrinsicSensitivity.rawCount) * 0.222;
-    
+
     // Step 7: Calculate treatment effects
     const treatmentEffects = calculateTreatmentEffects();
-    
+
     // Step 8: Calculate vulnerabilities with each treatment
     const vulnerabilities = {
         beforeTreatment: vulnerabilityBeforeTreatment,
@@ -719,14 +784,14 @@ function calculateRisk() {
         treatment2: vulnerabilityBeforeTreatment - treatmentEffects.treatment2.standardizedTotal,
         treatment3: vulnerabilityBeforeTreatment - treatmentEffects.treatment3.standardizedTotal
     };
-    
+
     // Best treatment (lowest vulnerability)
     const bestVulnerability = Math.min(
         vulnerabilities.treatment1,
         vulnerabilities.treatment2,
         vulnerabilities.treatment3
     );
-    
+
     // Store results
     assessmentData.results = {
         exposure: exposureScores,
@@ -743,7 +808,7 @@ function calculateRisk() {
         finalVulnerability: vulnerabilityBeforeTreatment,
         bestTreatmentVulnerability: bestVulnerability
     };
-    
+
     // Update displays
     updateResultsDisplay();
     updateComponentScores();
@@ -775,18 +840,18 @@ function updateFireRegimeSummary() {
 function updateResultsDisplay() {
     const results = assessmentData.results;
     if (!results || !results.vulnerability) return;
-    
+
     const vulnerability = results.finalVulnerability;
-    
+
     // Update overall score
     const scoreElement = document.getElementById("overall-risk-score");
     if (scoreElement) {
         scoreElement.textContent = vulnerability.toFixed(1);
     }
-    
+
     // Update risk level
     updateRiskLevel(vulnerability);
-    
+
     // Update results grid
     const resultsGrid = document.getElementById("results-grid");
     if (resultsGrid) {
@@ -827,16 +892,16 @@ function updateResultsDisplay() {
 function updateComponentScores() {
     const results = assessmentData.results;
     if (!results || !results.impact) return;
-    
+
     // Fire Regime Component Scores
     const fireComponentScoresContainer = document.getElementById("fire-component-scores");
     if (fireComponentScoresContainer) {
         let html = '<div class="component-scores-grid">';
-        
+
         fireComponents.forEach(fireComp => {
             const impact = results.impact.byFire[fireComp];
             const exposure = results.exposure[fireComp];
-            
+
             if (exposure === 1) {
                 html += `
                     <div class="component-score-item">
@@ -857,17 +922,17 @@ function updateComponentScores() {
                 `;
             }
         });
-        
+
         html += "</div>";
         fireComponentScoresContainer.innerHTML = html;
     }
-    
+
     // Ecosystem & Fuel Component Scores
     const componentScoresContainer = document.getElementById("component-scores");
     if (!componentScoresContainer) return;
-    
+
     let html = '<div class="component-scores-grid">';
-    
+
     // Ecosystem components
     html += '<div style="grid-column: 1/-1; margin-top: 1rem; margin-bottom: 0.5rem; padding: 0.5rem; background: #f0f9ff; border-radius: 4px;"><strong style="color: #0369a1;">Ecosystem Components</strong></div>';
     ecosystemComponents.forEach(component => {
@@ -885,7 +950,7 @@ function updateComponentScores() {
             `;
         }
     });
-    
+
     // Fuel components
     html += '<div style="grid-column: 1/-1; margin-top: 1rem; margin-bottom: 0.5rem; padding: 0.5rem; background: #fef3c7; border-radius: 4px;"><strong style="color: #92400e;">Fuel Components</strong></div>';
     fuelComponents.forEach(component => {
@@ -903,7 +968,7 @@ function updateComponentScores() {
             `;
         }
     });
-    
+
     html += "</div>";
     componentScoresContainer.innerHTML = html;
 }
@@ -912,29 +977,29 @@ function updateComponentScores() {
 function updateTreatmentCharts() {
     const results = assessmentData.results;
     if (!results || !results.treatments) return;
-    
+
     // Check if any treatments have data
-    const hasData = results.treatments.treatment1.total > 0 || 
-                    results.treatments.treatment2.total > 0 || 
+    const hasData = results.treatments.treatment1.total > 0 ||
+                    results.treatments.treatment2.total > 0 ||
                     results.treatments.treatment3.total > 0;
-    
+
     const section = document.getElementById("treatment-comparison-section");
     if (!hasData) {
         if (section) section.style.display = "none";
         return;
     }
-    
+
     if (section) section.style.display = "block";
-    
+
     const container = document.getElementById("treatment-charts-container");
     if (!container) return;
-    
+
     let html = `
         <div class="treatment-chart">
             <h5>Vulnerability Comparison</h5>
             <div class="chart-bars">
     `;
-    
+
     const vulns = results.vulnerability;
     const maxVuln = Math.max(
         Math.abs(vulns.beforeTreatment),
@@ -942,7 +1007,7 @@ function updateTreatmentCharts() {
         Math.abs(vulns.treatment2),
         Math.abs(vulns.treatment3)
     );
-    
+
     // Before treatment
     html += `
         <div class="chart-bar-container">
@@ -952,7 +1017,7 @@ function updateTreatmentCharts() {
             </div>
         </div>
     `;
-    
+
     // Treatment 1
     if (results.treatments.treatment1.total > 0) {
         const reduction1 = vulns.beforeTreatment - vulns.treatment1;
@@ -965,7 +1030,7 @@ function updateTreatmentCharts() {
             </div>
         `;
     }
-    
+
     // Treatment 2
     if (results.treatments.treatment2.total > 0) {
         const reduction2 = vulns.beforeTreatment - vulns.treatment2;
@@ -978,7 +1043,7 @@ function updateTreatmentCharts() {
             </div>
         `;
     }
-    
+
     // Treatment 3
     if (results.treatments.treatment3.total > 0) {
         const reduction3 = vulns.beforeTreatment - vulns.treatment3;
@@ -991,12 +1056,12 @@ function updateTreatmentCharts() {
             </div>
         `;
     }
-    
+
     html += `
             </div>
         </div>
     `;
-    
+
     container.innerHTML = html;
 }
 
@@ -1134,12 +1199,12 @@ function updateTreatmentComponentReport() {
 function updateRiskLevel(vulnerability) {
     let riskLevel = "";
     let riskColor = "";
-    
+
     if (vulnerability >= 7) {
         riskLevel = "Very High Vulnerability";
         riskColor = "#dc2626";
     } else if (vulnerability >= 4) {
-        riskLevel = "High Vulnerability";  
+        riskLevel = "High Vulnerability";
         riskColor = "#ea580c";
     } else if (vulnerability >= 1) {
         riskLevel = "Moderate Vulnerability";
@@ -1151,12 +1216,12 @@ function updateRiskLevel(vulnerability) {
         riskLevel = "Very Low Vulnerability";
         riskColor = "#15803d";
     }
-    
+
     const riskLevelElement = document.getElementById("risk-level-text");
     if (riskLevelElement) {
         riskLevelElement.textContent = riskLevel;
     }
-    
+
     const summaryElement = document.querySelector(".results-summary");
     if (summaryElement) {
         summaryElement.style.background = `linear-gradient(135deg, ${riskColor} 0%, ${riskColor}dd 100%)`;
@@ -1167,11 +1232,11 @@ function updateRiskLevel(vulnerability) {
 function updateRecommendations() {
     const results = assessmentData.results;
     if (!results || !results.vulnerability) return;
-    
+
     const vulnerability = results.finalVulnerability;
     let recommendations = "";
     let findings = [];
-    
+
     if (vulnerability >= 7) {
         recommendations = "Very high vulnerability detected. Immediate and intensive management interventions recommended. Consider comprehensive adaptive management strategies and frequent monitoring.";
         findings.push("Very high vulnerability to fire-climate interactions");
@@ -1198,12 +1263,12 @@ function updateRecommendations() {
         findings.push("System well-adapted to expected conditions");
         findings.push("Continue successful management practices");
     }
-    
+
     const recommendationElement = document.getElementById("recommendation-text");
     if (recommendationElement) {
         recommendationElement.textContent = recommendations;
     }
-    
+
     const findingsList = document.getElementById("findings-list");
     if (findingsList) {
         findingsList.innerHTML = "";
@@ -1218,19 +1283,19 @@ function updateRecommendations() {
 // Progress tracking
 function updateProgress() {
     const sections = ["scenario", "exposure", "sensitivity", "baseline", "treatments"];
-    
+
     sections.forEach(section => {
         const inputs = document.querySelectorAll(`#${section} .form-input`);
         let filled = 0;
-        
+
         inputs.forEach(input => {
             if (input.value && input.value !== "") filled++;
         });
-        
+
         const progress = inputs.length > 0 ? Math.round((filled / inputs.length) * 100) : 0;
         const progressElement = document.getElementById(`${section}-progress`);
         const progressBar = document.getElementById(`${section}-bar`);
-        
+
         if (progressElement) progressElement.textContent = progress + "%";
         if (progressBar) progressBar.style.width = progress + "%";
     });
@@ -1241,18 +1306,19 @@ function exportResults() {
     const results = assessmentData.results;
     const siteName = document.getElementById("site-name")?.value || "unknown-site";
     const assessor = document.getElementById("assessor-name")?.value || "";
-    
+
     const exportData = {
         timestamp: new Date().toISOString(),
         siteName: siteName,
         assessor: assessor,
         fireclimeVersion: "3.3",
+        inputs: collectInputs(),
         results: results,
         methodology: "Southwest FireCLIME Vulnerability Assessment",
         overallVulnerability: results?.finalVulnerability || 0,
         riskLevel: document.getElementById("risk-level-text")?.textContent || "Unknown"
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: "application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1261,3 +1327,4 @@ function exportResults() {
     a.click();
     URL.revokeObjectURL(url);
 }
+
