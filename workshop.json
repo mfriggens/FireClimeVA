@@ -1,0 +1,24 @@
+{
+  "presetNote": "Workshop example loaded: Rio Grande NF, dry mixed conifer. Your changes stay in this browser tab only. Use Save Assessment on the Results tab to keep them.",
+  "siteName": "Rio Grande National Forest – Dry Mixed Conifer",
+  "inputs": {
+    "site-name": "Rio Grande National Forest – Dry Mixed Conifer",
+    "ecosystem-type": "Dry mixed conifer",
+    "site-description": "Workshop example for the San Luis Valley Wildfire Council and RiGHT. Dry mixed conifer ecosystems on the Rio Grande National Forest.",
+    "climate-scenario": "Workshop assumption: warmer, drier conditions. Fire season length, mean peak ERC, mean summer temperature, and drought frequency/duration increase; relative humidity and snowpack/SWE decrease. These changes are expected to increase each fire regime characteristic (high severity patch size, fire frequency, soil burn severity, annual area burned).",
+    "climate-season": "increase",
+    "climate-erc": "increase",
+    "climate-temp": "increase",
+    "climate-rh": "decrease",
+    "climate-drought": "increase",
+    "climate-snow": "decrease",
+    "departure-size": "yes",
+    "exposure-size-change": "increase",
+    "departure-frequency": "yes",
+    "exposure-frequency-change": "increase",
+    "departure-severity": "yes",
+    "exposure-severity-change": "increase",
+    "departure-area": "yes",
+    "exposure-area-change": "increase"
+  }
+}
