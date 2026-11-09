@@ -1,4 +1,4 @@
-// FireCLIME VA JavaScript v3.2 - Complete Implementation
+// FireCLIME VA JavaScript v3.3 - Complete Implementation
 
 // Global data storage
 let assessmentData = {
@@ -1246,7 +1246,7 @@ function exportResults() {
         timestamp: new Date().toISOString(),
         siteName: siteName,
         assessor: assessor,
-        fireclimeVersion: "3.2",
+        fireclimeVersion: "3.3",
         results: results,
         methodology: "Southwest FireCLIME Vulnerability Assessment",
         overallVulnerability: results?.finalVulnerability || 0,
